@@ -20,7 +20,7 @@ from dataclasses import dataclass, field
 import pandas as pd
 
 from ate.config import Config
-from ate.frontier.compute import REPORT_AT, RuleFrontier, rule_frontier
+from ate.frontier.compute import REPORT_AT, RuleFrontier, Verdict, rule_frontier
 from ate.logging import get_logger
 
 log = get_logger(__name__)
@@ -41,8 +41,18 @@ class StreamSummary:
 
     @property
     def untunable(self) -> list[RuleFrontier]:
-        """Rules whose separation interval does not clear chance."""
-        return [f for f in self.frontiers if not f.tunable]
+        """Rules the evidence says should not be tuned."""
+        return [f for f in self.frontiers if f.verdict is Verdict.NOT_TUNABLE]
+
+    @property
+    def unmeasured(self) -> list[RuleFrontier]:
+        """Rules with too few detections for any verdict.
+
+        Reported separately from untunable because the action differs: an
+        untunable rule needs a better signal, an unmeasured one needs a longer
+        window.
+        """
+        return [f for f in self.frontiers if f.verdict is Verdict.INSUFFICIENT_EVIDENCE]
 
     @property
     def free_volume(self) -> int:
@@ -64,6 +74,13 @@ class StreamSummary:
         if not self.alerts:
             return 0.0
         return 100.0 * sum(f.alerts for f in self.untunable) / self.alerts
+
+    @property
+    def unmeasured_volume_pct(self) -> float:
+        """Share of the stream produced by rules with too few detections."""
+        if not self.alerts:
+            return 0.0
+        return 100.0 * sum(f.alerts for f in self.unmeasured) / self.alerts
 
     def cost_of(self, fraction: float) -> float:
         """True positives lost, as a percentage, if `fraction` of every rule's
@@ -110,10 +127,11 @@ def analyse(frame: pd.DataFrame, config: Config) -> StreamSummary:
             "rules_analysed": summary.rules_analysed,
             "free_volume_pct": round(summary.free_volume_pct, 2),
             "untunable_rules": len(summary.untunable),
+            "unmeasured_rules": len(summary.unmeasured),
             "cost_of_half": round(summary.cost_of(0.5), 2),
         },
     )
     return summary
 
 
-__all__ = ["StreamSummary", "analyse", "REPORT_AT"]
+__all__ = ["StreamSummary", "Verdict", "analyse", "REPORT_AT"]
