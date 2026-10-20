@@ -58,6 +58,15 @@ class Config:
     # excluded from the frontier to keep the chart readable.
     min_rule_volume: int = field(default_factory=lambda: _env_int("ATE_MIN_RULE_VOLUME", 50))
 
+    # Detections a rule needs before a tunable verdict is allowed at all. Below
+    # this the bootstrap cannot tell that the observed detections are
+    # unrepresentative, because it resamples those same few over and over, and
+    # it can produce a narrow interval around a badly wrong estimate. Measured
+    # at 20: see ADR-005.
+    min_true_positives_for_verdict: int = field(
+        default_factory=lambda: _env_int("ATE_MIN_TRUE_POSITIVES", 20)
+    )
+
     # Noise alerts drawn per bootstrap replicate. Both bootstrapped statistics
     # have sampling variance dominated by the true positive count, which is in
     # the tens to low hundreds, not by the noise count, which is in the tens of
@@ -76,6 +85,11 @@ class Config:
             raise ConfigError(f"min_rule_volume must be at least 1, got {self.min_rule_volume}")
         if self.bootstrap_noise_cap < 100:
             raise ConfigError(f"bootstrap_noise_cap must be at least 100, got {self.bootstrap_noise_cap}")
+        if self.min_true_positives_for_verdict < 1:
+            raise ConfigError(
+                f"min_true_positives_for_verdict must be at least 1, "
+                f"got {self.min_true_positives_for_verdict}"
+            )
 
 
 def load_config() -> Config:

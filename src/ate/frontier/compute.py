@@ -30,6 +30,7 @@ same error as the claim this tool is built to replace.
 from __future__ import annotations
 
 from dataclasses import dataclass
+from enum import StrEnum
 
 import numpy as np
 import pandas as pd
@@ -42,6 +43,19 @@ log = get_logger(__name__)
 # Fractions of volume removed at which the frontier is reported. The curve is
 # computed at every threshold; these are the points tabulated and published.
 REPORT_AT = (0.1, 0.25, 0.5, 0.75, 0.9)
+
+
+class Verdict(StrEnum):
+    """What the evidence supports for a rule.
+
+    Three states, not two. A rule with very few detections is not "untunable",
+    it is unmeasured, and collapsing the two tells an engineer to leave a rule
+    alone when the right action is to collect a longer window.
+    """
+
+    TUNABLE = "tunable"
+    NOT_TUNABLE = "not_tunable"
+    INSUFFICIENT_EVIDENCE = "insufficient_evidence"
 
 
 @dataclass(frozen=True)
@@ -69,15 +83,34 @@ class RuleFrontier:
     separation: float
     separation_low: float
     separation_high: float
+    # Detections required before any verdict other than insufficient evidence.
+    min_true_positives: int = 20
+
+    @property
+    def verdict(self) -> Verdict:
+        """What the evidence supports.
+
+        Below `min_true_positives` the answer is that there is not enough
+        evidence to say, whatever the interval reads. The bootstrap resamples
+        the same handful of detections repeatedly, so it measures variability
+        within the observed sample and cannot see that the sample itself is
+        unrepresentative. Measured on a signal with no information at all, it
+        returned a tunable verdict 3 to 5 percent of the time below 20
+        detections and never at or above it. See ADR-005.
+        """
+        if self.true_positives < self.min_true_positives:
+            return Verdict.INSUFFICIENT_EVIDENCE
+        return Verdict.TUNABLE if self.separation_low > 0.5 else Verdict.NOT_TUNABLE
 
     @property
     def tunable(self) -> bool:
-        """True when the signal carries information beyond chance.
+        """True only when the evidence supports tuning this rule.
 
-        The interval, not the point estimate, decides. A separation of 0.58
-        measured on twelve true positives is not evidence of a tunable rule.
+        Insufficient evidence is not tunable. Suppressing alerts is
+        irreversible in a way that not suppressing them is not, so the
+        unmeasured case resolves to no.
         """
-        return self.separation_low > 0.5
+        return self.verdict is Verdict.TUNABLE
 
     @property
     def hours_saved_at_first_loss(self) -> float:
@@ -267,4 +300,5 @@ def rule_frontier(frame: pd.DataFrame, rule: str, config: Config) -> RuleFrontie
         separation=separation,
         separation_low=sep_low,
         separation_high=sep_high,
+        min_true_positives=config.min_true_positives_for_verdict,
     )
