@@ -55,12 +55,51 @@ detection count, asking how often the tool returned a tunable verdict:
 | 50 | 0.0 percent | 0.160 |
 | 100 | 0.0 percent | 0.114 |
 
-A 3 to 5 percent false rate is, in one sense, exactly what a 95 percent interval
-promises. That is the point: the promise is about long run coverage, and the
-consequence here is that roughly one rule in twenty with a handful of detections
-gets green lit for suppression. For a tool whose purpose is to stop people
-deleting detections, that rate is not acceptable, and the fact that it is
-statistically unsurprising does not make it safe.
+### Correction: the zeros above were underpowered
+
+The table above says 0.0 percent at 20 detections and beyond. That is 0 out of
+60 draws, which is consistent with any true rate below about 5 percent, and the
+first version of this document read it as evidence that the false rate went to
+zero. It does not.
+
+A test written for an unrelated accessibility change hit a rule with 100
+detections and no signal at all, reported tunable with an interval of 0.508 to
+0.618. Re-running the sweep at 250 draws per count:
+
+| Detections | Draws | False tunable rate |
+| --- | --- | --- |
+| 20 | 250 | 4.8 percent |
+| 30 | 250 | 3.6 percent |
+| 50 | 250 | 3.2 percent |
+| 100 | 250 | 2.0 percent |
+
+The rate does not go to zero above the threshold. It settles at roughly the 5
+percent a 95 percent interval promises, which is not a defect: a confidence
+interval that never contained a wrong answer would not be a confidence interval.
+Raising the detection minimum does not remove that and nothing can, short of
+raising the confidence level and accepting wider intervals everywhere.
+
+### What the threshold actually buys
+
+The failure below 20 detections is a different thing from the nominal error rate
+above it, and conflating the two is what the first version of this document did.
+
+Above the threshold, a false tunable verdict comes with a wide interval that
+barely clears 0.5. The 100 detection case read 0.508 to 0.618: a reader looking
+at it sees a lower bound sitting on the line and treats the result with the
+caution it deserves. The interval is doing its job and reporting weak evidence
+as weak.
+
+Below the threshold, the interval stops carrying that information. The six
+detection case read 0.611 to 0.960, which is not a marginal result; it is a
+confident one, and it is wrong. A reader has no signal at all that the number is
+untrustworthy, because the usual signal, interval width, has been destroyed by
+resampling six points.
+
+So the threshold is not there to drive the error rate to zero. It is there to
+keep false positives in the regime where the interval still warns you about
+them. That is a smaller claim than the one this document originally made and it
+is the one the measurements support.
 
 ## Options considered
 
@@ -87,10 +126,14 @@ with fewer than `min_true_positives_for_verdict` detections is
 `insufficient_evidence` regardless of what its interval reads, and
 `insufficient_evidence` never reads as tunable.
 
-The default is 20, taken from the measurement above as the smallest count at
-which the false tunable rate was zero across the sweep. It is configuration
-rather than a constant, because a team with a reason can lower it and own the
-consequence.
+The default is 20. It is the count above which a false tunable verdict arrives
+with an interval that visibly straddles chance, rather than a narrow interval
+around a wrong estimate. It is configuration rather than a constant, because a
+team with a reason can lower it and own the consequence.
+
+It is explicitly not a count above which false positives stop. Roughly one in
+twenty weak rules will still read tunable, with a lower bound sitting on 0.5,
+and the report shows that bound so the reader can see it.
 
 ## Consequences
 
@@ -110,5 +153,12 @@ decision refuses. "We do not know" is an answer, and a tool that cannot say it
 will eventually say something worse.
 
 Two tests pin this: one reproduces the exact six detection case and requires an
-unmeasured verdict, and one sweeps twelve seeds at 25 detections on a pure noise
-signal and requires that none of them come back tunable.
+unmeasured verdict, and one asserts that when a no signal rule above the
+threshold does read tunable, its interval lower bound sits close to 0.5 rather
+than comfortably above it. The second test replaced an earlier one that required
+no seed to come back tunable, which was asserting the overclaim this document
+originally made and would have failed as soon as the seed sweep widened.
+
+The lesson, recorded because it is the more useful half: a measured zero from
+60 draws is not a zero, and writing "measured" next to it does not make it one.
+The sweep should have been powered for the rate it was trying to rule out.

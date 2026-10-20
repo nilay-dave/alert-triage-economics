@@ -159,3 +159,35 @@ def test_every_colour_pair_meets_its_contrast_threshold():
         cwd=root, capture_output=True, text=True,
     )
     assert result.returncode == 0, result.stdout + result.stderr
+
+
+def test_chart_alt_text_carries_the_information_not_the_appearance(config):
+    """A non visual reader gets nothing from a description of line positions.
+    The alt text has to carry the verdict counts and the headline number."""
+    from dataclasses import replace
+
+    from ate.report.render import chart_description
+
+    rng = np.random.default_rng(29)
+    frames = []
+    for rule, shift, true_positives in (("good", 2.0, 100), ("noise", 0.0, 300), ("sparse", 1.5, 4)):
+        is_tp = np.zeros(4_000, dtype=bool)
+        is_tp[:true_positives] = True
+        signal = rng.standard_normal(4_000) + np.where(is_tp, shift, 0.0)
+        frames.append(pd.DataFrame({"rule": rule, "signal": signal, "is_true_positive": is_tp}))
+    summary = analyse(pd.concat(frames, ignore_index=True), replace(config, min_true_positives_for_verdict=20))
+
+    text = chart_description(summary)
+    assert "3 rules" in text
+    assert "noise" in text and "cannot be tuned" in text
+    assert "sparse" in text and "4 detections" in text
+    assert "percent of true positives" in text
+
+
+def test_blanket_chart_alt_text_lists_every_bar(tmp_path, config):
+    html = render_html(
+        _summary(config), tmp_path / "r.html",
+        chart_paths={"frontier": "f.png", "blanket": "b.png"},
+    ).read_text(encoding="utf-8")
+    assert "50 percent removed costs" in html
+    assert "90 percent removed costs" in html
