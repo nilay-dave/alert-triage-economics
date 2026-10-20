@@ -250,3 +250,53 @@ def test_bootstrap_with_one_class_absent_returns_degenerate_intervals(config):
     assert separation == (0.5, 0.5)
     first, separation = _bootstrap(signal, np.ones(200, dtype=bool), config)
     assert separation == (0.5, 0.5)
+
+
+@pytest.mark.parametrize(
+    "transform, name",
+    [
+        (lambda x: np.exp(x / 2), "exponential"),
+        (lambda x: 1 / (1 + np.exp(-x)), "logistic, bounded to 0 and 1"),
+        (lambda x: x**3, "cubic"),
+        (lambda x: 100 * (1 / (1 + np.exp(-x))), "a 0 to 100 confidence score"),
+        (lambda x: np.round(10 * (1 / (1 + np.exp(-x)))), "a discrete 0 to 10 score, with heavy ties"),
+    ],
+)
+def test_separation_is_invariant_under_a_monotone_transform(config, alerts_factory, transform, name):
+    """The corpus generator draws signals from two shifted normals, which is a
+    textbook model and not how real alert signals are distributed. This is why
+    that does not undermine the published numbers.
+
+    Separation is a rank statistic, so it is unchanged by any strictly
+    increasing transform of the signal. A real signal that is log normal,
+    bounded, or a rounded 0 to 10 score has the same separation as the normal
+    one it is a transform of, and the frontier curve has the same shape.
+    """
+    frame = alerts_factory(alerts=6_000, true_positives=120, shift=1.4, seed=41)
+    baseline = rule_frontier(frame, "r", config)
+
+    transformed = frame.copy()
+    transformed["signal"] = transform(frame["signal"].to_numpy())
+    result = rule_frontier(transformed, "r", config)
+
+    # Ties from rounding move the statistic slightly; everything else is exact.
+    tolerance = 0.02 if "discrete" in name else 1e-9
+    assert result.separation == pytest.approx(baseline.separation, abs=tolerance), name
+    assert result.volume_removed_at_first_loss == pytest.approx(
+        baseline.volume_removed_at_first_loss, abs=tolerance
+    ), name
+    assert result.verdict is baseline.verdict, name
+
+
+def test_an_inverted_transform_flips_the_separation(config, alerts_factory):
+    """A decreasing transform is the configuration error case: the signal still
+    carries exactly as much information, pointing the wrong way."""
+    frame = alerts_factory(alerts=6_000, true_positives=120, shift=1.4, seed=41)
+    baseline = rule_frontier(frame, "r", config)
+
+    inverted = frame.copy()
+    inverted["signal"] = -frame["signal"]
+    result = rule_frontier(inverted, "r", config)
+
+    assert result.separation == pytest.approx(1.0 - baseline.separation, abs=1e-9)
+    assert not result.tunable
