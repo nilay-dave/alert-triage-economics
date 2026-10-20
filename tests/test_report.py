@@ -23,7 +23,10 @@ def test_dict_carries_the_headline_numbers(config):
     payload = to_dict(_summary(config))
     assert payload["stream"]["alerts"] == 8_000
     assert payload["stream"]["one_in"] > 1
-    assert "0.5" in payload["stream"]["blanket_cut_cost"]
+    assert "cut_50" in payload["stream"]["blanket_cut_cost"]
+    assert not any("." in key for key in payload["stream"]["blanket_cut_cost"]), (
+        "a dotted key cannot be addressed by the published-number check"
+    )
     assert payload["stream"]["untunable_rules"] == ["noise"]
 
 

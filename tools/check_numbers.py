@@ -25,6 +25,11 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 PATTERN = re.compile(r"<!--number:([a-zA-Z0-9_.\[\]]+)-->(.*?)<!--/number-->", re.DOTALL)
+# Any opening marker at all. A marker that does not match PATTERN, for example
+# because its path contains a character the resolver cannot address, used to be
+# skipped in silence, so a tagged number went unchecked while the run still
+# reported success.
+ANY_MARKER = re.compile(r"<!--number:([^>]*)-->")
 TOLERANCE = 0.05
 
 
@@ -67,7 +72,18 @@ def check(readme: Path, metrics: Path) -> list[str]:
 
     for document in documents(readme):
         where = document.relative_to(ROOT)
-        for match in PATTERN.finditer(document.read_text(encoding="utf-8")):
+        text = document.read_text(encoding="utf-8")
+
+        parsed = {m.group(1) for m in PATTERN.finditer(text)}
+        for marker in ANY_MARKER.finditer(text):
+            path = marker.group(1)
+            if path not in parsed:
+                failures.append(
+                    f"{where}: the marker {path!r} cannot be read as a metrics path, "
+                    "so its number was never checked"
+                )
+
+        for match in PATTERN.finditer(text):
             path, published = match.group(1), match.group(2).strip()
             checked += 1
             try:

@@ -27,7 +27,11 @@ def to_dict(summary: StreamSummary) -> dict:
             "minutes_per_alert": summary.minutes_per_alert,
             "untunable_rules": [f.rule for f in summary.untunable],
             "untunable_volume_pct": round(summary.untunable_volume_pct, 2),
-            "blanket_cut_cost": {str(f): round(summary.cost_of(f), 2) for f in REPORT_AT},
+            # Keys carry no dots, matching docs/metrics.json, so the same path
+            # works in the report, the JSON and the published-number check.
+            "blanket_cut_cost": {
+                f"cut_{int(f * 100)}": round(summary.cost_of(f), 2) for f in REPORT_AT
+            },
         },
         "rules": [
             {

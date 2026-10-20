@@ -69,8 +69,8 @@
 
   <div class="headline">
     <div class="big" role="img"
-         aria-label="Removing half of every rule's volume costs {{ "%.1f"|format(stream.blanket_cut_cost['0.5']) }} percent of true positives">
-      {{ "%.1f"|format(stream.blanket_cut_cost['0.5']) }}<small>%</small>
+         aria-label="Removing half of every rule's volume costs {{ "%.1f"|format(stream.blanket_cut_cost['cut_50']) }} percent of true positives">
+      {{ "%.1f"|format(stream.blanket_cut_cost['cut_50']) }}<small>%</small>
     </div>
     <p>
       of true positives are lost if half of every rule's alert volume is removed. That is the number
