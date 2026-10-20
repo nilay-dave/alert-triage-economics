@@ -84,7 +84,12 @@ def _headline() -> dict:
         "untunable_rules": [f.rule for f in summary.untunable],
         "untunable_volume_pct": round(summary.untunable_volume_pct, 1),
         "untunable_true_positives": sum(f.true_positives for f in summary.untunable),
-        "blanket_cut_cost": {str(f): round(summary.cost_of(f), 1) for f in (0.1, 0.25, 0.5, 0.75, 0.9)},
+        # Keys carry no dots. A dotted key cannot be addressed by the
+        # <!--number:path--> mechanism without escaping, and an escaped tag was
+        # silently skipped by the checker rather than failing loudly.
+        "blanket_cut_cost": {
+            f"cut_{int(f * 100)}": round(summary.cost_of(f), 1) for f in (0.1, 0.25, 0.5, 0.75, 0.9)
+        },
         "best_rule": max(summary.frontiers, key=lambda f: f.volume_removed_at_first_loss).rule,
         "best_rule_free_pct": round(
             100 * max(f.volume_removed_at_first_loss for f in summary.frontiers), 1
