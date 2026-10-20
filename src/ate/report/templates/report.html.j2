@@ -50,6 +50,8 @@
   .v-no::before { content: "x"; }
   .v-yes { color: var(--ok); }
   .v-yes::before { content: "ok"; font-size: 10px; }
+  .v-unknown { color: var(--muted); }
+  .v-unknown::before { content: "?"; }
   .ci { color: var(--muted); font-size: 12px; }
   .skip { position: absolute; left: -9999px; }
   .skip:focus { left: 8px; top: 8px; background: var(--bg); padding: 10px 14px;
@@ -92,8 +94,8 @@
       <div class="l">rules with no usable signal</div>
     </div>
     <div class="tile" role="listitem">
-      <div class="n">{{ "%.1f"|format(stream.untunable_volume_pct) }}%</div>
-      <div class="l">of volume from those rules</div>
+      <div class="n">{{ stream.unmeasured_rules | length }}</div>
+      <div class="l">rules with too few detections to judge</div>
     </div>
   </div>
 
@@ -127,7 +129,8 @@
     <caption>
       Sorted by alert volume. Separation is the probability a random true positive outscores a random
       noise alert; 0.5 is no information. Tunability is decided by the interval, not the point
-      estimate, because a rule with a dozen detections can look separable by chance.
+      estimate. A rule with fewer detections than the configured minimum reads "unknown" rather than
+      "no": it needs a longer window, not a better signal.
     </caption>
     <thead>
       <tr>
@@ -150,7 +153,13 @@
           <div class="ci">[{{ "%.1f"|format(rule.first_loss_ci[0] * 100) }}, {{ "%.1f"|format(rule.first_loss_ci[1] * 100) }}]</div>
         </td>
         <td>{{ "%.1f"|format(rule.loss_at['0.5'] * 100) }}%</td>
-        <td class="v {{ 'v-yes' if rule.tunable else 'v-no' }}">{{ "yes" if rule.tunable else "no" }}</td>
+        {% if rule.verdict == "tunable" %}
+        <td class="v v-yes">yes</td>
+        {% elif rule.verdict == "not_tunable" %}
+        <td class="v v-no">no</td>
+        {% else %}
+        <td class="v v-unknown">unknown</td>
+        {% endif %}
       </tr>
       {% endfor %}
     </tbody>
