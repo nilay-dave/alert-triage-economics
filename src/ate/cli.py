@@ -154,3 +154,7 @@ def gate(
 
     typer.echo("")
     typer.echo("  PASS  the proposed cut is within the loss budget")
+
+
+if __name__ == "__main__":  # pragma: no cover - entry point for `python -m ate.cli`
+    app()

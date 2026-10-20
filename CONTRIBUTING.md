@@ -10,9 +10,18 @@ make install
 make verify
 ```
 
-`make verify` runs ruff and the test suite with coverage. It needs no network,
-no API keys and no containers. If it does not pass on a clean checkout, that is
-a bug worth an issue on its own.
+`make verify` runs every check CI runs, in the same order: lint, tests with
+coverage, the dependency check, the report contrast check and the provenance
+audit. A verify that is a subset of CI is a verify that lies, so if it passes
+locally the build should be green.
+
+It needs no network, no API keys and no containers. If it does not pass on a
+clean checkout, that is a bug worth an issue on its own.
+
+Everything runs through `$(PYTHON)`, which defaults to `python3`. The console
+scripts pip installs bind to whichever interpreter installed them, which on a
+machine with several Pythons is not necessarily the one on PATH. Override it if
+you need to: `make verify PYTHON=python3.12`.
 
 ## The rules that matter here
 
