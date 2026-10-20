@@ -121,7 +121,7 @@ alert history.
 | Python 3.11+ | Core, CLI, tooling | The language the SOC automation around it is already written in |
 | numpy | Frontier curve, rank statistics, bootstrap | The whole computation is cumulative sums over sorted arrays; this is what that is for |
 | pandas | Corpus handling, per rule splits | A year of one tenant's alerts fits in memory, so a dataframe is the right size of tool. See ADR-002 on what was not needed |
-| SciPy | Available for distribution work | Present as a dependency; the rank statistics are computed directly because the closed forms are two lines |
+| pyarrow | Parquet engine behind pandas | Nothing imports it; pandas raises without it. Recorded in `tools/check_dependencies.py` so "not imported" and "not needed" stay distinguishable |
 | matplotlib | The frontier chart | The chart is the deliverable, not an illustration |
 | Typer | CLI with three verbs | Typed arguments and subcommands with a small dependency surface |
 | Jinja2 | HTML report | The report is what gets attached to a tuning proposal |
