@@ -48,6 +48,49 @@ def test_noise_rule_is_reported_as_untunable(config):
     summary = analyse(_stream(), config)
     assert [f.rule for f in summary.untunable] == ["noise"]
     assert summary.untunable_volume_pct > 30
+    assert summary.unmeasured == []
+
+
+def test_a_rule_with_too_few_detections_is_unmeasured_not_untunable(config):
+    """Regression: with six detections the tool reported a no-signal rule as
+    tunable, with a narrow interval around a badly wrong estimate. The bootstrap
+    resamples the same six over and over, so it measures variability within the
+    sample and cannot see the sample is unrepresentative."""
+    from dataclasses import replace
+
+    rng = np.random.default_rng(11)
+    alerts = 18_000
+    is_tp = np.zeros(alerts, dtype=bool)
+    is_tp[:6] = True
+    frame = pd.DataFrame({
+        "rule": "sparse",
+        "signal": rng.standard_normal(alerts),
+        "is_true_positive": is_tp,
+    })
+    summary = analyse(frame, replace(config, min_true_positives_for_verdict=20))
+    assert [f.rule for f in summary.unmeasured] == ["sparse"]
+    assert summary.untunable == []
+    assert not summary.frontiers[0].tunable
+    assert summary.unmeasured_volume_pct == pytest.approx(100.0)
+
+
+def test_lowering_the_minimum_restores_the_old_behaviour(config):
+    """The threshold is configuration, not a constant, so a team with a reason
+    can lower it and own the consequence."""
+    from dataclasses import replace
+
+    rng = np.random.default_rng(11)
+    alerts = 18_000
+    is_tp = np.zeros(alerts, dtype=bool)
+    is_tp[:6] = True
+    frame = pd.DataFrame({
+        "rule": "sparse",
+        "signal": rng.standard_normal(alerts),
+        "is_true_positive": is_tp,
+    })
+    summary = analyse(frame, replace(config, min_true_positives_for_verdict=1))
+    assert summary.unmeasured == []
+    assert len(summary.untunable) + sum(1 for f in summary.frontiers if f.tunable) == 1
 
 
 def test_free_volume_is_bounded_by_the_stream(config):
@@ -91,6 +134,8 @@ def test_frontiers_are_ordered_by_volume(config):
 
 
 def test_summary_with_no_true_positives_anywhere(config):
+    """Zero detections is unmeasured, not untunable. The two call for different
+    actions: a longer window against a better signal."""
     frame = pd.DataFrame(
         {"rule": "r", "signal": np.linspace(0, 1, 500), "is_true_positive": False}
     )
@@ -98,7 +143,8 @@ def test_summary_with_no_true_positives_anywhere(config):
     assert summary.true_positives == 0
     assert summary.free_volume == 0
     assert summary.cost_of(0.5) == 0.0
-    assert summary.untunable == summary.frontiers
+    assert summary.untunable == []
+    assert summary.unmeasured == summary.frontiers
 
 
 def test_free_volume_shrinks_as_the_window_grows(config):
@@ -143,3 +189,17 @@ def test_blanket_cut_cost_is_stable_across_window_sizes(config):
         measured.append(analyse(frame, fast).cost_of(0.5))
 
     assert abs(measured[0] - measured[1]) < 5.0, measured
+
+
+def test_rates_on_an_empty_summary_are_zero_not_an_error():
+    """Guard paths. A StreamSummary built with no alerts must answer rather than
+    divide by zero, because it is reachable through the JSON shape."""
+    from ate.frontier.summary import StreamSummary
+
+    empty = StreamSummary(alerts=0, true_positives=0, rules_analysed=0, rules_skipped_low_volume=())
+    assert empty.tp_rate == 0.0
+    assert empty.free_volume_pct == 0.0
+    assert empty.free_hours == 0.0
+    assert empty.untunable_volume_pct == 0.0
+    assert empty.unmeasured_volume_pct == 0.0
+    assert empty.cost_of(0.5) == 0.0

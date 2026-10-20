@@ -88,6 +88,16 @@ def frontier(
             f"[{frontier_result.separation_low:.3f}, {frontier_result.separation_high:.3f}], "
             f"{frontier_result.true_positives} true positives"
         )
+    typer.echo(
+        f"  too few detections      {len(summary.unmeasured)} "
+        f"({summary.unmeasured_volume_pct:.1f}% of volume)"
+    )
+    for frontier_result in summary.unmeasured:
+        typer.echo(
+            f"     {frontier_result.rule}: separation {frontier_result.separation:.3f} "
+            f"[{frontier_result.separation_low:.3f}, {frontier_result.separation_high:.3f}], "
+            f"{frontier_result.true_positives} true positives"
+        )
     typer.echo("")
     typer.echo("  cost of a blanket cut")
     for fraction in (0.1, 0.25, 0.5, 0.75, 0.9):
@@ -132,6 +142,7 @@ def gate(
     typer.echo(f"  true positives lost   {cost:.2f}%")
     typer.echo(f"  limit                 {max_tp_loss_pct:.2f}%")
     typer.echo(f"  untunable rules       {len(summary.untunable)}")
+    typer.echo(f"  unmeasured rules      {len(summary.unmeasured)}")
 
     if cost > max_tp_loss_pct:
         typer.echo("")

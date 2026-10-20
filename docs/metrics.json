@@ -12,12 +12,17 @@
     "free_volume_pct": 6.5,
     "free_hours": 4320,
     "minutes_per_alert": 8.0,
-    "untunable_rule_count": 1,
-    "untunable_rules": [
+    "untunable_rule_count": 0,
+    "untunable_rules": [],
+    "untunable_volume_pct": 0.0,
+    "untunable_true_positives": 0,
+    "unmeasured_rule_count": 1,
+    "unmeasured_rules": [
       "ids_signature_generic"
     ],
-    "untunable_volume_pct": 9.0,
-    "untunable_true_positives": 12,
+    "unmeasured_volume_pct": 9.0,
+    "unmeasured_true_positives": 12,
+    "min_true_positives_for_verdict": 20,
     "blanket_cut_cost": {
       "cut_10": 1.2,
       "cut_25": 4.8,
@@ -31,9 +36,9 @@
     "confidence_pct": 95
   },
   "quality": {
-    "test_coverage_pct": 98.5,
-    "test_count": 101,
-    "commit_count": 17
+    "test_coverage_pct": 99.3,
+    "test_count": 116,
+    "commit_count": 23
   },
   "performance": {
     "hardware": {

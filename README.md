@@ -11,7 +11,7 @@
 ## What this solves
 
 - **"We reduced false positives by 60 percent" is reported without its cost.** This computes the cost: for every candidate threshold, volume removed against true positives lost. Halving volume on the bundled corpus costs <!--number:analysis.blanket_cut_cost.cut_50-->15.6<!--/number--> percent of detections, and a quarter costs <!--number:analysis.blanket_cut_cost.cut_25-->4.8<!--/number--> percent.
-- **Some rules cannot be tuned at all, and nobody checks which.** <!--number:analysis.untunable_rule_count-->1<!--/number--> of <!--number:analysis.rules_analysed-->8<!--/number--> rules here has a signal carrying no information about whether an alert is real, so every threshold on it deletes detections at the same rate as noise. It produces <!--number:analysis.untunable_volume_pct-->9.0<!--/number--> percent of the stream.
+- **Some rules cannot be judged at all, and nobody checks which.** <!--number:analysis.unmeasured_rule_count-->1<!--/number--> of <!--number:analysis.rules_analysed-->8<!--/number--> rules here has only <!--number:analysis.unmeasured_true_positives-->12<!--/number--> detections across <!--number:analysis.unmeasured_volume_pct-->9.0<!--/number--> percent of the stream. The tool reports it as unmeasured rather than guessing, because below <!--number:analysis.min_true_positives_for_verdict-->20<!--/number--> detections a bootstrap interval can be narrow and badly wrong.
 - **It runs as a CI gate on a tuning proposal.** `ate gate --cut 0.25 --max-tp-loss-pct 5` exits non zero when a proposed volume reduction costs more detections than the budget allows.
 
 ## The notebook version
@@ -41,28 +41,32 @@ remove half the volume, lose half the detections. A line bowing below it is a
 rule worth tuning. The dashed grey line sitting on the diagonal is
 `ids_signature_generic`, and it is the most useful thing in the chart.
 
-### The rule that cannot be tuned
+### The rule the tool refuses to judge
 
-`ids_signature_generic` produces <!--number:analysis.untunable_volume_pct-->9.0<!--/number--> percent of the corpus and <!--number:analysis.untunable_true_positives-->12<!--/number--> true positives. Its tuning signal is the severity score assigned by whoever wrote the signature, which says nothing about whether any particular alert is real.
+`ids_signature_generic` produces <!--number:analysis.unmeasured_volume_pct-->9.0<!--/number--> percent of the corpus and <!--number:analysis.unmeasured_true_positives-->12<!--/number--> true positives. Its tuning signal is the severity score assigned by whoever wrote the signature, which says nothing about whether any particular alert is real. It is in the corpus deliberately, so the tool has a chance to get it wrong.
 
 Its point estimate for removable volume is 12.7 percent, which reads as a
-perfectly good tuning opportunity. It is not one. That figure is determined by
-where twelve detections happened to land, and its separation statistic, the
-probability that a random true positive outscores a random noise alert, has a
-95 percent interval running from 0.38 to 0.69. A signal carrying no information
-produces 0.5. The interval straddles it.
+perfectly good tuning opportunity. Its separation statistic, the probability a
+random true positive outscores a random noise alert, is 0.537 with a 95 percent
+interval of 0.378 to 0.691. A signal with no information produces 0.5, so the
+interval straddles chance and the first version of this tool reported the rule
+untunable on that basis.
 
-So the tool reports the rule as not tunable, and it decides that from the lower
-bound rather than the point estimate. This is the reason every statistic here
-ships with an interval, and it is written up in
-[ADR-001](docs/adr/adr-001-bootstrap-over-point-estimates.md). Acting on the
-point estimate would mean suppressing nine percent of a stream on the strength
-of twelve observations.
+That looked like the safety property working. It was luck.
 
-The rule is in the bundled corpus deliberately. A corpus where every rule can be
-tuned is a corpus built to flatter the tool, and a tool only ever evaluated
-against flattering data will confidently recommend tuning things that should be
-left alone. [ADR-003](docs/adr/adr-003-synthetic-corpus.md) covers that choice.
+The same rule on a 200,000 alert corpus holds six detections, and the tool
+reported it **tunable**, with an interval of 0.611 to 0.960. Narrow, confident,
+comfortably clear of chance, and wrong by construction. A bootstrap resamples
+the detections it has; with six of them it measures how the statistic moves
+under reweighting those six, and it has nothing to compare them against to
+notice they are unrepresentative. If all six score high, every replicate scores
+high.
+
+So there are three verdicts here, not two. Below <!--number:analysis.min_true_positives_for_verdict-->20<!--/number--> detections, measured as the point where a no-signal rule stopped being green lit across a sweep, the answer is that there is not enough evidence to say, and unmeasured never reads as tunable. [ADR-005](docs/adr/adr-005-insufficient-evidence.md) has the measurement.
+
+The distinction matters because the actions differ. An untunable rule needs a
+better signal. An unmeasured rule needs a longer window. Collapsing the two
+sends an engineer to redesign a rule that may be perfectly good.
 
 ### The number I stopped leading with
 
@@ -121,7 +125,7 @@ alert history.
 | matplotlib | The frontier chart | The chart is the deliverable, not an illustration |
 | Typer | CLI with three verbs | Typed arguments and subcommands with a small dependency surface |
 | Jinja2 | HTML report | The report is what gets attached to a tuning proposal |
-| pytest, pytest-cov | <!--number:quality.test_count-->101<!--/number--> tests, <!--number:quality.test_coverage_pct-->98.5<!--/number--> percent branch coverage | Runs with no network, no API keys and no containers |
+| pytest, pytest-cov | <!--number:quality.test_count-->116<!--/number--> tests, <!--number:quality.test_coverage_pct-->99.3<!--/number--> percent branch coverage | Runs with no network, no API keys and no containers |
 
 ## Quickstart
 
@@ -188,6 +192,7 @@ Four decisions in [`docs/adr/`](docs/adr/), each with the options rejected and w
 - [ADR-002](docs/adr/adr-002-capped-noise-pool.md): capping the resampled noise pool, with the table showing it does not move the interval.
 - [ADR-003](docs/adr/adr-003-synthetic-corpus.md): shipping a synthetic corpus, and putting a rule in it that cannot be tuned.
 - [ADR-004](docs/adr/adr-004-which-number-to-lead-with.md): the boring choice. Lead with the stable number rather than the intuitive one.
+- [ADR-005](docs/adr/adr-005-insufficient-evidence.md): a third verdict, because an interval cannot tell you that your sample is unrepresentative.
 
 ## Intentionally out of scope
 
@@ -232,7 +237,8 @@ system. Full threat model in [SECURITY.md](SECURITY.md).
 | Corpus empty | Checked before analysis | `ValueError`, exits non zero | An empty export is a pipeline failure, not a finding |
 | Rule has no true positives in the window | Positive count checked | Reported untunable, removable volume zero | Correct: no evidence either way, and zero is the conservative answer |
 | Rule below the volume threshold | Counted before analysis | Listed as skipped, not analysed | Lower `ATE_MIN_RULE_VOLUME` if you want it anyway |
-| Rule with a dozen detections | Interval width | Wide interval, reported untunable unless the lower bound clears 0.5 | Collect a longer window |
+| Rule below the detection minimum | Detection count checked before the verdict | Reported unmeasured, never tunable, whatever the interval reads | Collect a longer window. See ADR-005 |
+| Rule with a wide interval above the minimum | Interval width | Reported untunable unless the lower bound clears 0.5 | Improve the signal, not the window |
 | Signal is constant | Rank statistic on ties | Separation near 0.5, reported untunable | Correct: a constant signal is not a tuning lever |
 | Analysis window too short | Free volume figure inflates | Caveat stated wherever free volume appears | Prefer the blanket cut cost, see ADR-004 |
 | Hundreds of rules | Runtime | Linear in rule count | Lower `--resamples` for a gate check |
@@ -286,7 +292,7 @@ The no-detections fix is [`b6d278f`](../../commit/b6d278f); the `clean[-1]` dire
 - **Run against a real labelled corpus.** Every number here is a simulation, labelled as one. A real alert history behind an NDA would replace the single most questionable thing in this repository.
 - **Time stratified frontiers.** A rule's signal distribution drifts. Computing the frontier per month would show whether a tuning that was safe in January still is.
 - **Before production use:** confirm the disposition labels mean what you think. A corpus where "closed as benign" was conflated with "not a true positive" will produce confident numbers about a question you did not ask.
-- **First metric to watch after deploying:** not volume. Watch the separation statistic per rule over time. A rule whose separation is falling is one whose tuning is about to start costing more than it did.
+- **First metric to watch after deploying:** not volume. Watch the separation statistic per rule over time, and the count of unmeasured rules alongside it. A rule whose separation is falling is one whose tuning is about to start costing more than it did; a growing unmeasured list means detections are getting rarer, which is either very good news or a broken pipeline.
 
 ## License
 
