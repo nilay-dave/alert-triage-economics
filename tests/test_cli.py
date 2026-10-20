@@ -141,3 +141,19 @@ def test_charts_written_outside_the_report_directory_still_resolve(tmp_path):
     assert result.exit_code == 0
     assert (charts / "frontier.png").exists()
     assert str(charts) in html.read_text(encoding="utf-8")
+
+
+def test_every_declared_dependency_is_used():
+    """An unused dependency is a claim the code does not support, and if it also
+    sits in the README tech stack it is an advertised capability the project
+    does not have. This caught scipy, which was declared and never imported."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, str(root / "tools" / "check_dependencies.py")],
+        cwd=root, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
