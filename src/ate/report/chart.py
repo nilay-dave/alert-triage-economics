@@ -22,6 +22,7 @@ from ate.frontier.summary import StreamSummary  # noqa: E402
 # untunable rules are dashed as well as grey.
 TUNABLE_COLOURS = ["#1f4e79", "#2e7d5b", "#8a5a00", "#6a3d9a", "#a3251c", "#0f6f84", "#7a5c2e"]
 UNTUNABLE_COLOUR = "#8c8c8c"
+UNMEASURED_COLOUR = "#b07d2b"
 
 
 def draw_frontier(summary: StreamSummary, out_path: Path | str, dpi: int = 160) -> Path:
@@ -40,14 +41,19 @@ def draw_frontier(summary: StreamSummary, out_path: Path | str, dpi: int = 160) 
     for frontier in summary.frontiers:
         x = [point.volume_removed for point in frontier.curve][::-1]
         y = [point.true_positives_lost for point in frontier.curve][::-1]
-        if frontier.tunable:
+        from ate.frontier.compute import Verdict
+
+        if frontier.verdict is Verdict.TUNABLE:
             colour = TUNABLE_COLOURS[tunable_index % len(TUNABLE_COLOURS)]
             tunable_index += 1
             style, width = "-", 1.8
             label = f"{frontier.rule} (sep {frontier.separation:.2f})"
-        else:
+        elif frontier.verdict is Verdict.NOT_TUNABLE:
             colour, style, width = UNTUNABLE_COLOUR, "--", 2.0
             label = f"{frontier.rule} (no usable signal)"
+        else:
+            colour, style, width = UNMEASURED_COLOUR, "-.", 2.0
+            label = f"{frontier.rule} ({frontier.true_positives} detections, too few to judge)"
         axes.plot(x, y, color=colour, linestyle=style, linewidth=width, zorder=2, label=label)
 
     axes.set_xlim(0, 1)

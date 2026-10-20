@@ -168,3 +168,85 @@ def test_rule_with_no_true_positives_has_a_degenerate_interval(config):
     assert result.true_positives == 0
     assert result.separation == pytest.approx(0.5)
     assert not result.tunable
+
+
+def test_verdict_is_insufficient_evidence_below_the_minimum(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=10_000, true_positives=6, shift=2.0, seed=12)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.INSUFFICIENT_EVIDENCE
+    assert not result.tunable, "an unmeasured rule must never read as tunable"
+
+
+def test_verdict_is_tunable_at_or_above_the_minimum(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=10_000, true_positives=200, shift=2.0, seed=12)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.TUNABLE
+    assert result.tunable
+
+
+def test_verdict_is_not_tunable_for_a_measured_noise_rule(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=20_000, true_positives=200, shift=0.0, seed=13)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.NOT_TUNABLE
+    assert not result.tunable
+
+
+def test_false_tunable_rate_is_controlled_above_the_minimum(config, alerts_factory):
+    """ADR-005's measurement, asserted at a size the suite can afford.
+
+    On a signal carrying no information at all, 20 or more detections must not
+    produce a tunable verdict across a sweep of seeds. Below the minimum the
+    verdict is insufficient evidence, which is also not tunable, so the property
+    under test is simply that no seed yields a tunable call.
+    """
+    from dataclasses import replace
+
+    fast = replace(config, bootstrap_resamples=150, bootstrap_noise_cap=2_000)
+    for seed in range(12):
+        frame = alerts_factory(alerts=8_000, true_positives=25, shift=0.0, seed=200 + seed)
+        assert not rule_frontier(frame, "r", fast).tunable, f"seed {seed}"
+
+
+def test_first_loss_with_an_all_lossy_curve_is_zero():
+    """Defensive path: if no cut point is lossless the answer is zero."""
+    import numpy as np
+
+    from ate.frontier.compute import _first_loss
+
+    volume = np.array([0.9, 0.5, 0.0])
+    lost = np.array([1.0, 0.6, 0.2])  # never reaches zero
+    assert _first_loss(volume, lost, 3) == pytest.approx(0.0)
+
+
+def test_replicate_statistics_with_no_positives_are_degenerate():
+    import numpy as np
+
+    from ate.frontier.compute import _replicate_statistics
+
+    signal = np.array([3.0, 2.0, 1.0])
+    assert _replicate_statistics(signal, np.zeros(3, dtype=bool)) == (0.0, 0.5)
+
+
+def test_bootstrap_with_one_class_absent_returns_degenerate_intervals(config):
+    import numpy as np
+
+    from ate.frontier.compute import _bootstrap
+
+    signal = np.linspace(0, 1, 200)
+    first, separation = _bootstrap(signal, np.zeros(200, dtype=bool), config)
+    assert first == (0.0, 0.0)
+    assert separation == (0.5, 0.5)
+    first, separation = _bootstrap(signal, np.ones(200, dtype=bool), config)
+    assert separation == (0.5, 0.5)
