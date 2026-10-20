@@ -109,3 +109,39 @@ def test_curve_points_are_bounded(config):
         for point in rule["curve"]:
             assert 0.0 <= point["volume_removed"] <= 1.0
             assert 0.0 <= point["true_positives_lost"] <= 1.0
+
+
+def test_chart_distinguishes_an_unmeasured_rule(tmp_path, config):
+    """The unmeasured rule has to be visually distinct from an untunable one,
+    because the two call for different actions."""
+    from dataclasses import replace
+
+    rng = np.random.default_rng(21)
+    frames = []
+    for rule, shift, true_positives in (("measured", 1.6, 120), ("sparse", 1.6, 5)):
+        is_tp = np.zeros(4_000, dtype=bool)
+        is_tp[:true_positives] = True
+        signal = rng.standard_normal(4_000) + np.where(is_tp, shift, 0.0)
+        frames.append(pd.DataFrame({"rule": rule, "signal": signal, "is_true_positive": is_tp}))
+    summary = analyse(pd.concat(frames, ignore_index=True), replace(config, min_true_positives_for_verdict=20))
+
+    assert [f.rule for f in summary.unmeasured] == ["sparse"]
+    path = draw_frontier(summary, tmp_path / "c.png")
+    assert path.exists() and path.stat().st_size > 10_000
+
+
+def test_report_shows_unknown_for_an_unmeasured_rule(tmp_path, config):
+    from dataclasses import replace
+
+    rng = np.random.default_rng(22)
+    is_tp = np.zeros(4_000, dtype=bool)
+    is_tp[:5] = True
+    frame = pd.DataFrame({
+        "rule": "sparse",
+        "signal": rng.standard_normal(4_000) + np.where(is_tp, 1.6, 0.0),
+        "is_true_positive": is_tp,
+    })
+    summary = analyse(frame, replace(config, min_true_positives_for_verdict=20))
+    html = render_html(summary, tmp_path / "r.html").read_text(encoding="utf-8")
+    assert ">unknown<" in html
+    assert 'content: "?"' in html

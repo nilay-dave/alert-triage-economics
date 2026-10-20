@@ -189,3 +189,17 @@ def test_blanket_cut_cost_is_stable_across_window_sizes(config):
         measured.append(analyse(frame, fast).cost_of(0.5))
 
     assert abs(measured[0] - measured[1]) < 5.0, measured
+
+
+def test_rates_on_an_empty_summary_are_zero_not_an_error():
+    """Guard paths. A StreamSummary built with no alerts must answer rather than
+    divide by zero, because it is reachable through the JSON shape."""
+    from ate.frontier.summary import StreamSummary
+
+    empty = StreamSummary(alerts=0, true_positives=0, rules_analysed=0, rules_skipped_low_volume=())
+    assert empty.tp_rate == 0.0
+    assert empty.free_volume_pct == 0.0
+    assert empty.free_hours == 0.0
+    assert empty.untunable_volume_pct == 0.0
+    assert empty.unmeasured_volume_pct == 0.0
+    assert empty.cost_of(0.5) == 0.0

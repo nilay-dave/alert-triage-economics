@@ -100,3 +100,44 @@ def test_version_matches_package_metadata():
     from importlib.metadata import version
 
     assert __version__ == version("alert-triage-economics")
+
+
+def test_frontier_reports_rules_with_too_few_detections(tmp_path):
+    rng = np.random.default_rng(31)
+    is_tp = np.zeros(6_000, dtype=bool)
+    is_tp[:5] = True
+    frame = pd.DataFrame({
+        "rule": "sparse",
+        "signal": rng.standard_normal(6_000) + np.where(is_tp, 1.6, 0.0),
+        "is_true_positive": is_tp,
+    })
+    path = tmp_path / "sparse.parquet"
+    frame.to_parquet(path, index=False)
+    result = runner.invoke(app, ["frontier", "--alerts", str(path), "--resamples", "100"])
+    assert result.exit_code == 0
+    assert "too few detections      1" in result.output
+    assert "sparse" in result.output
+
+
+def test_gate_reports_both_verdict_counts(tmp_path):
+    result = runner.invoke(app, [
+        "gate", "--alerts", str(_corpus(tmp_path)), "--cut", "0.1",
+        "--max-tp-loss-pct", "90", "--resamples", "100",
+    ])
+    assert "untunable rules" in result.output
+    assert "unmeasured rules" in result.output
+
+
+def test_charts_written_outside_the_report_directory_still_resolve(tmp_path):
+    """The relative path from the report to the charts cannot be computed when
+    the charts live outside the report's directory, so it falls back to the
+    path as given."""
+    html = tmp_path / "out" / "r.html"
+    charts = tmp_path / "elsewhere" / "charts"
+    result = runner.invoke(app, [
+        "frontier", "--alerts", str(_corpus(tmp_path)),
+        "--out", str(html), "--charts", str(charts), "--resamples", "100",
+    ])
+    assert result.exit_code == 0
+    assert (charts / "frontier.png").exists()
+    assert str(charts) in html.read_text(encoding="utf-8")
