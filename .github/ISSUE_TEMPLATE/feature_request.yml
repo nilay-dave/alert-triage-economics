@@ -1,0 +1,27 @@
+name: Feature request
+description: Suggest a capability this tool should have.
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: problem
+    attributes:
+      label: The problem
+      description: What tuning decision you cannot currently cost.
+    validations:
+      required: true
+
+  - type: textarea
+    id: interval
+    attributes:
+      label: What the interval would be
+      description: |
+        If this adds a statistic, say what its uncertainty interval would be and
+        how it would be computed. A statistic published without one is not
+        something this repository will ship. See ADR-001.
+    validations:
+      required: true
+
+  - type: textarea
+    id: alternatives
+    attributes:
+      label: Alternatives considered

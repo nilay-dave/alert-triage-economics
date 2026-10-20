@@ -1,0 +1,55 @@
+name: Bug report
+description: The analysis produced a wrong answer, or crashed.
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Please do not paste alert content, usernames or hostnames. This tool
+        reads three columns and so does almost every bug report about it: rule
+        name, signal value, and label.
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What the analysis reported, and what you expected instead.
+    validations:
+      required: true
+
+  - type: textarea
+    id: reproduce
+    attributes:
+      label: How to reproduce
+      description: The exact command, with a synthetic corpus that shows it.
+      placeholder: |
+        ate generate --alerts 500000 --out c.parquet --seed 7
+        ate frontier --alerts c.parquet
+    validations:
+      required: true
+
+  - type: dropdown
+    id: area
+    attributes:
+      label: Which part
+      options:
+        - Frontier curve or removable volume
+        - Separation statistic
+        - Bootstrap intervals
+        - Tunability decision
+        - Stream rollup or blanket cut cost
+        - Corpus generation
+        - Charts or report
+        - CLI or exit codes
+        - Performance
+        - Something else
+    validations:
+      required: true
+
+  - type: input
+    id: version
+    attributes:
+      label: Version
+      description: Output of `ate --version`.
+    validations:
+      required: true
