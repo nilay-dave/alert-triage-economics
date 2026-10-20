@@ -217,3 +217,36 @@ def test_false_tunable_rate_is_controlled_above_the_minimum(config, alerts_facto
     for seed in range(12):
         frame = alerts_factory(alerts=8_000, true_positives=25, shift=0.0, seed=200 + seed)
         assert not rule_frontier(frame, "r", fast).tunable, f"seed {seed}"
+
+
+def test_first_loss_with_an_all_lossy_curve_is_zero():
+    """Defensive path: if no cut point is lossless the answer is zero."""
+    import numpy as np
+
+    from ate.frontier.compute import _first_loss
+
+    volume = np.array([0.9, 0.5, 0.0])
+    lost = np.array([1.0, 0.6, 0.2])  # never reaches zero
+    assert _first_loss(volume, lost, 3) == pytest.approx(0.0)
+
+
+def test_replicate_statistics_with_no_positives_are_degenerate():
+    import numpy as np
+
+    from ate.frontier.compute import _replicate_statistics
+
+    signal = np.array([3.0, 2.0, 1.0])
+    assert _replicate_statistics(signal, np.zeros(3, dtype=bool)) == (0.0, 0.5)
+
+
+def test_bootstrap_with_one_class_absent_returns_degenerate_intervals(config):
+    import numpy as np
+
+    from ate.frontier.compute import _bootstrap
+
+    signal = np.linspace(0, 1, 200)
+    first, separation = _bootstrap(signal, np.zeros(200, dtype=bool), config)
+    assert first == (0.0, 0.0)
+    assert separation == (0.5, 0.5)
+    first, separation = _bootstrap(signal, np.ones(200, dtype=bool), config)
+    assert separation == (0.5, 0.5)
