@@ -125,7 +125,7 @@ alert history.
 | matplotlib | The frontier chart | The chart is the deliverable, not an illustration |
 | Typer | CLI with three verbs | Typed arguments and subcommands with a small dependency surface |
 | Jinja2 | HTML report | The report is what gets attached to a tuning proposal |
-| pytest, pytest-cov | <!--number:quality.test_count-->116<!--/number--> tests, <!--number:quality.test_coverage_pct-->99.3<!--/number--> percent branch coverage | Runs with no network, no API keys and no containers |
+| pytest, pytest-cov | <!--number:quality.test_count-->124<!--/number--> tests, <!--number:quality.test_coverage_pct-->99.3<!--/number--> percent branch coverage | Runs with no network, no API keys and no containers |
 
 ## Quickstart
 
