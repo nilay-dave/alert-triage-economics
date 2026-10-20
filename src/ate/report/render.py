@@ -68,6 +68,43 @@ def render_json(summary: StreamSummary, out_path: Path | str) -> Path:
     return out_path
 
 
+def chart_description(summary: StreamSummary) -> str:
+    """Alt text that carries the chart's information, not its appearance.
+
+    A sighted reader gets the shape: which lines bow below the diagonal and
+    which sit on it. A non visual reader gets nothing from "a line chart of
+    true positives lost against volume removed", so the text carries the
+    verdict counts and names the rules the chart singles out.
+    """
+    tunable = [f.rule for f in summary.frontiers if f.tunable]
+    parts = [
+        f"Frontier chart for {summary.rules_analysed} "
+        f"{'rule' if summary.rules_analysed == 1 else 'rules'}. "
+        f"{len(tunable)} {'bows' if len(tunable) == 1 else 'bow'} below the no information "
+        f"diagonal, meaning volume can be removed faster than detections are lost."
+    ]
+    if summary.untunable:
+        names = ", ".join(f.rule for f in summary.untunable)
+        count = len(summary.untunable)
+        parts.append(
+            f"{count} {'tracks' if count == 1 else 'track'} the diagonal and "
+            f"cannot be tuned: {names}."
+        )
+    if summary.unmeasured:
+        detail = ", ".join(
+            f"{f.rule} with {f.true_positives} detections" for f in summary.unmeasured
+        )
+        count = len(summary.unmeasured)
+        parts.append(
+            f"{count} {'has' if count == 1 else 'have'} too few detections to judge: {detail}."
+        )
+    parts.append(
+        f"Removing half of every rule's volume would cost {summary.cost_of(0.5):.1f} "
+        "percent of true positives."
+    )
+    return " ".join(parts)
+
+
 def render_html(
     summary: StreamSummary,
     out_path: Path | str,
@@ -85,7 +122,11 @@ def render_html(
         lstrip_blocks=True,
     )
     payload = to_dict(summary)
-    html = env.get_template("report.html.j2").render(charts=chart_paths or {}, **payload)
+    html = env.get_template("report.html.j2").render(
+        charts=chart_paths or {},
+        chart_alt=chart_description(summary),
+        **payload,
+    )
     out_path = Path(out_path)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(html, encoding="utf-8")

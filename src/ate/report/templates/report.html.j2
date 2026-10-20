@@ -102,8 +102,7 @@
   {% if charts.frontier %}
   <h2>The frontier</h2>
   <figure>
-    <img src="{{ charts.frontier }}"
-         alt="Line chart of true positives lost against alert volume removed, one line per rule. Rules with a usable signal bow below the diagonal; the rule with no usable signal tracks it.">
+    <img src="{{ charts.frontier }}" alt="{{ chart_alt }}">
     <figcaption>
       Each line is one rule. The dotted diagonal is what tuning at random looks like: remove half the
       volume, lose half the detections. A line that bows below it is a rule worth tuning. A line on or
@@ -116,7 +115,8 @@
   <h2>What a blanket cut costs</h2>
   <figure>
     <img src="{{ charts.blanket }}"
-         alt="Bar chart of true positives lost at each level of blanket volume reduction.">
+         alt="Bar chart of true positives lost at each level of blanket volume reduction:
+              {% for fraction, cost in stream.blanket_cut_cost.items() %}{{ fraction | replace('cut_', '') }} percent removed costs {{ "%.1f"|format(cost) }} percent of detections{{ ", " if not loop.last }}{% endfor %}.">
     <figcaption>
       A flat percentage cut applied to every rule, including the ones that cannot be tuned. This is
       what an uncosted volume reduction target actually buys.
