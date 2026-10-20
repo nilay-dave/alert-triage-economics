@@ -70,17 +70,48 @@ the result could never have used.
 [ADR-002](adr/adr-002-capped-noise-pool.md) has the table, and a test asserts the
 claim rather than leaving it to the document.
 
-## Tunability
+## The three verdicts
 
-A rule is reported tunable when the lower bound of its separation interval
-clears 0.5.
+`tunable`, `not_tunable`, `insufficient_evidence`. Three states, because two
+cannot say the thing that most often needs saying.
 
-Not the point estimate. The bundled corpus contains a rule whose point estimate
-is 0.537 and whose interval runs 0.378 to 0.691, on twelve detections in 45,000
-alerts. Its removable free volume reads 12.7 percent, which looks like a real
-opportunity and is an artefact of where twelve observations happened to land.
+**`tunable`** means the lower bound of the separation interval clears 0.5, and
+the rule has at least the minimum number of detections. Not the point estimate:
+a rule showing 0.54 on an interval of 0.38 to 0.69 has not demonstrated
+anything.
 
-Deciding from the lower bound makes the tool conservative in the direction that
-matters: it will call a tunable rule untunable before it calls an untunable rule
-tunable. Suppressing alerts is irreversible in a way that not suppressing them
-is not.
+**`not_tunable`** means there are enough detections to judge and the interval
+does not clear chance. The signal is the problem. Fix the signal or accept the
+volume.
+
+**`insufficient_evidence`** means there are fewer detections than the minimum,
+which defaults to 20. The answer is that we do not know, whatever the interval
+reads. The window is the problem, not the signal.
+
+### Why the third state exists
+
+A bootstrap resamples the detections it has. With six of them it measures how
+the statistic moves under reweighting those six, which is a real quantity and
+not the one that matters: it has nothing to compare them against to notice they
+are unrepresentative. If all six score high, every replicate scores high, and
+the interval comes out narrow around a badly wrong estimate.
+
+That is not hypothetical. The bundled corpus contains a rule with no signal at
+all by construction. On a 200,000 alert window it holds six detections, and the
+tool reported separation 0.804 with a 95 percent interval of 0.611 to 0.960.
+Narrow, confident, clear of chance, and wrong.
+
+[ADR-005](adr/adr-005-insufficient-evidence.md) has the sweep behind the
+threshold: on a pure noise signal a tunable verdict came back 3 to 5 percent of
+the time below 20 detections, and never at or above it.
+
+### Why not collapse unmeasured into untunable
+
+It would give the same safety behaviour and the wrong instruction. An untunable
+rule needs a better signal, which is a redesign. An unmeasured rule needs a
+longer window, which is an export. Telling an engineer the first when the second
+is true sends them to rewrite a rule that may be perfectly good.
+
+`insufficient_evidence` never reads as tunable, so the conservative direction
+holds either way. Suppressing alerts is irreversible in a way that not
+suppressing them is not.

@@ -11,7 +11,7 @@ would have cost.
 ## Start here
 
 - [Reading the frontier](reading-the-frontier.md) explains the chart and what each shape means.
-- [The statistics](statistics.md) covers separation, intervals, and why tunability is decided from a lower bound.
+- [The statistics](statistics.md) covers separation, intervals, and the three verdicts, including why "we do not know" needed to be one of them.
 - The [example report](report.html) is regenerated on every docs deploy from the bundled synthetic corpus.
 
 ## Install
@@ -37,3 +37,4 @@ and `is_true_positive`, and the numbers stop being a simulation.
 - [ADR-002](adr/adr-002-capped-noise-pool.md): capping the resampled noise pool, with the measurement.
 - [ADR-003](adr/adr-003-synthetic-corpus.md): the synthetic corpus, and the rule in it that cannot be tuned.
 - [ADR-004](adr/adr-004-which-number-to-lead-with.md): leading with the stable number rather than the intuitive one.
+- [ADR-005](adr/adr-005-insufficient-evidence.md): the third verdict, and the measurement behind its threshold.
