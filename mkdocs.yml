@@ -39,4 +39,5 @@ nav:
       - ADR-001 Bootstrap over point estimates: adr/adr-001-bootstrap-over-point-estimates.md
       - ADR-002 Capped noise pool: adr/adr-002-capped-noise-pool.md
       - ADR-003 Synthetic corpus: adr/adr-003-synthetic-corpus.md
+      - ADR-004 Which number to lead with: adr/adr-004-which-number-to-lead-with.md
   - Example report: report.html
