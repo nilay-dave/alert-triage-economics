@@ -168,3 +168,52 @@ def test_rule_with_no_true_positives_has_a_degenerate_interval(config):
     assert result.true_positives == 0
     assert result.separation == pytest.approx(0.5)
     assert not result.tunable
+
+
+def test_verdict_is_insufficient_evidence_below_the_minimum(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=10_000, true_positives=6, shift=2.0, seed=12)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.INSUFFICIENT_EVIDENCE
+    assert not result.tunable, "an unmeasured rule must never read as tunable"
+
+
+def test_verdict_is_tunable_at_or_above_the_minimum(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=10_000, true_positives=200, shift=2.0, seed=12)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.TUNABLE
+    assert result.tunable
+
+
+def test_verdict_is_not_tunable_for_a_measured_noise_rule(config, alerts_factory):
+    from dataclasses import replace
+
+    from ate.frontier.compute import Verdict
+
+    frame = alerts_factory(alerts=20_000, true_positives=200, shift=0.0, seed=13)
+    result = rule_frontier(frame, "r", replace(config, min_true_positives_for_verdict=20))
+    assert result.verdict is Verdict.NOT_TUNABLE
+    assert not result.tunable
+
+
+def test_false_tunable_rate_is_controlled_above_the_minimum(config, alerts_factory):
+    """ADR-005's measurement, asserted at a size the suite can afford.
+
+    On a signal carrying no information at all, 20 or more detections must not
+    produce a tunable verdict across a sweep of seeds. Below the minimum the
+    verdict is insufficient evidence, which is also not tunable, so the property
+    under test is simply that no seed yields a tunable call.
+    """
+    from dataclasses import replace
+
+    fast = replace(config, bootstrap_resamples=150, bootstrap_noise_cap=2_000)
+    for seed in range(12):
+        frame = alerts_factory(alerts=8_000, true_positives=25, shift=0.0, seed=200 + seed)
+        assert not rule_frontier(frame, "r", fast).tunable, f"seed {seed}"
