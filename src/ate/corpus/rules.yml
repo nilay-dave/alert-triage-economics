@@ -1,0 +1,86 @@
+# Alert corpus specification.
+#
+# This describes a SOC's alert stream: which rules fire, how often, how much of
+# each rule's volume is a real detection, and which observable signal a tuning
+# change could key on. It is the thing a real deployment replaces with an export
+# of its own alert history.
+#
+# The shapes here are not invented from nothing. The rule names and the kinds of
+# tuning signal are ordinary SIEM content. The class imbalance is the important
+# number and it is set deliberately: public SOC reporting consistently puts true
+# positive rates in the low single digits or below, so the corpus targets
+# roughly 1 true positive per 300 alerts overall. The README states that this is
+# a chosen figure rather than a measured one, and the generator is in the repo
+# so anyone can change it and re-run.
+#
+# Per rule:
+#   share           fraction of total alert volume this rule produces
+#   tp_rate         fraction of THIS rule's alerts that are true positives
+#   signal          the observable a tuning change keys on
+#   signal_tp_shift how much higher the signal runs on true positives, in units
+#                   of the signal's own standard deviation. 0.0 means the signal
+#                   carries no information and the rule cannot be tuned without
+#                   losing detections at the same rate as noise. That case is
+#                   real and the corpus includes it on purpose.
+
+rules:
+  - name: impossible_travel
+    share: 0.21
+    tp_rate: 0.00214
+    signal: distance_km
+    signal_tp_shift: 1.4
+    note: Geo distance between consecutive logins. Tunable, travel really is further on real cases.
+
+  - name: failed_logon_burst
+    share: 0.18
+    tp_rate: 0.00107
+    signal: attempt_count
+    signal_tp_shift: 0.9
+    note: Count of failures in the window. Partly tunable, but service accounts sit in the same range.
+
+  - name: powershell_encoded_command
+    share: 0.14
+    tp_rate: 0.00588
+    signal: entropy
+    signal_tp_shift: 1.1
+    note: Shannon entropy of the decoded payload.
+
+  - name: edr_suspicious_parent
+    share: 0.12
+    tp_rate: 0.00481
+    signal: vendor_confidence
+    signal_tp_shift: 1.6
+    note: The EDR's own confidence score. The most tunable rule in the set.
+
+  - name: dlp_bulk_download
+    share: 0.11
+    tp_rate: 0.0016
+    signal: bytes_mb
+    signal_tp_shift: 0.5
+    note: Transfer volume. Weakly tunable, backups and real exfiltration overlap heavily.
+
+  - name: new_admin_grant
+    share: 0.08
+    tp_rate: 0.01123
+    signal: hour_of_day_oddity
+    signal_tp_shift: 0.7
+    note: How far outside business hours the grant occurred.
+
+  - name: ids_signature_generic
+    share: 0.09
+    tp_rate: 0.00032
+    signal: severity_score
+    signal_tp_shift: 0.0
+    note: >
+      The rule that cannot be tuned. Its severity score is assigned by the
+      signature author and carries no information about whether a given alert is
+      a real detection, so every threshold that removes noise removes true
+      positives at the same rate. Every corpus needs one of these, because
+      pretending every rule has a frontier is the dishonest version of this tool.
+
+  - name: cloud_api_anomaly
+    share: 0.07
+    tp_rate: 0.00267
+    signal: rarity_score
+    signal_tp_shift: 1.2
+    note: How rare the API call is for this principal.
