@@ -58,6 +58,13 @@ class Config:
     # excluded from the frontier to keep the chart readable.
     min_rule_volume: int = field(default_factory=lambda: _env_int("ATE_MIN_RULE_VOLUME", 50))
 
+    # Noise alerts drawn per bootstrap replicate. Both bootstrapped statistics
+    # have sampling variance dominated by the true positive count, which is in
+    # the tens to low hundreds, not by the noise count, which is in the tens of
+    # thousands. Capping the noise pool makes a replicate roughly six times
+    # cheaper and measurably does not change the interval. See ADR-002.
+    bootstrap_noise_cap: int = field(default_factory=lambda: _env_int("ATE_BOOTSTRAP_NOISE_CAP", 20_000))
+
     def __post_init__(self) -> None:
         if self.minutes_per_alert <= 0:
             raise ConfigError(f"minutes_per_alert must be positive, got {self.minutes_per_alert}")
@@ -67,6 +74,8 @@ class Config:
             raise ConfigError(f"confidence must be in (0.5, 1.0), got {self.confidence}")
         if self.min_rule_volume < 1:
             raise ConfigError(f"min_rule_volume must be at least 1, got {self.min_rule_volume}")
+        if self.bootstrap_noise_cap < 100:
+            raise ConfigError(f"bootstrap_noise_cap must be at least 100, got {self.bootstrap_noise_cap}")
 
 
 def load_config() -> Config:

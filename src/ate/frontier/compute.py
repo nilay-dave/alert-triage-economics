@@ -141,6 +141,29 @@ def _first_loss(volume_removed: np.ndarray, true_positives_lost: np.ndarray) -> 
     return float(volume_removed[clean[0]])
 
 
+def _replicate_statistics(signal: np.ndarray, is_tp: np.ndarray) -> tuple[float, float]:
+    """First loss volume and separation for one bootstrap replicate.
+
+    Computed directly rather than by building the full frontier curve, which is
+    the same two numbers for roughly twice the work. The results are identical,
+    which a test asserts against the curve based path.
+    """
+    total = signal.size
+    worst_true_positive = signal[is_tp].min()
+    # Every alert scoring below the lowest scoring true positive is removable
+    # without losing a detection.
+    kept = int((signal >= worst_true_positive).sum())
+    first_loss = (total - kept) / total
+
+    order = np.argsort(signal, kind="stable")
+    ranks = np.empty(total)
+    ranks[order] = np.arange(1, total + 1)
+    n_pos = int(is_tp.sum())
+    n_neg = total - n_pos
+    u = ranks[is_tp].sum() - n_pos * (n_pos + 1) / 2
+    return first_loss, float(u / (n_pos * n_neg))
+
+
 def _bootstrap(
     signal: np.ndarray,
     is_tp: np.ndarray,
@@ -149,11 +172,16 @@ def _bootstrap(
     """Percentile intervals for first loss volume and for separation.
 
     Resampling is stratified: true positives and noise alerts are resampled
-    within their own groups so every replicate holds the same number of true
+    within their own groups, so every replicate holds the same number of true
     positives as the original. An unstratified bootstrap on a rule with twelve
-    true positives draws replicates with zero of them, where neither statistic
-    is defined, and the resulting interval is an artefact of that rather than a
-    statement about the rule.
+    true positives draws replicates holding none of them, where neither
+    statistic is defined, and the resulting interval would be an artefact of
+    that rather than a statement about the rule.
+
+    The noise pool is capped per replicate. Both statistics have sampling
+    variance dominated by the true positive count, so the cap changes the
+    interval by less than the bootstrap's own resampling noise while making a
+    replicate roughly six times cheaper. ADR-002 has the measurement.
     """
     rng = np.random.default_rng(config.seed)
     positive_index = np.flatnonzero(is_tp)
@@ -162,20 +190,20 @@ def _bootstrap(
     if positive_index.size == 0 or negative_index.size == 0:
         return (0.0, 0.0), (0.5, 0.5)
 
+    noise_draw = min(config.bootstrap_noise_cap, negative_index.size)
     first_losses = np.empty(config.bootstrap_resamples)
     separations = np.empty(config.bootstrap_resamples)
 
     for replicate in range(config.bootstrap_resamples):
         sampled_pos = rng.choice(positive_index, size=positive_index.size, replace=True)
-        sampled_neg = rng.choice(negative_index, size=negative_index.size, replace=True)
+        sampled_neg = rng.choice(negative_index, size=noise_draw, replace=True)
         index = np.concatenate([sampled_pos, sampled_neg])
-        replicate_signal = signal[index]
         replicate_tp = np.concatenate(
-            [np.ones(sampled_pos.size, dtype=bool), np.zeros(sampled_neg.size, dtype=bool)]
+            [np.ones(sampled_pos.size, dtype=bool), np.zeros(noise_draw, dtype=bool)]
         )
-        volume, lost, _ = _curve(replicate_signal, replicate_tp)
-        first_losses[replicate] = _first_loss(volume, lost)
-        separations[replicate] = _separation(replicate_signal, replicate_tp)
+        first_losses[replicate], separations[replicate] = _replicate_statistics(
+            signal[index], replicate_tp
+        )
 
     tail = (1.0 - config.confidence) / 2.0
     low, high = 100 * tail, 100 * (1.0 - tail)
