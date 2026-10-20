@@ -145,3 +145,17 @@ def test_report_shows_unknown_for_an_unmeasured_rule(tmp_path, config):
     html = render_html(summary, tmp_path / "r.html").read_text(encoding="utf-8")
     assert ">unknown<" in html
     assert 'content: "?"' in html
+
+
+def test_every_colour_pair_meets_its_contrast_threshold():
+    """Runs the same check CI runs, so a palette edit cannot quietly fail AA."""
+    import subprocess
+    import sys
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    result = subprocess.run(
+        [sys.executable, str(root / "tools" / "check_contrast.py")],
+        cwd=root, capture_output=True, text=True,
+    )
+    assert result.returncode == 0, result.stdout + result.stderr
