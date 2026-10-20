@@ -1,0 +1,32 @@
+name: docs
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+          cache: pip
+      - name: Install
+        run: |
+          pip install -e ".[dev]"
+          pip install mkdocs-material
+      - name: Generate the example report the docs link to
+        run: |
+          ate generate --alerts 500000 --out data/generated/docs.parquet --seed 7
+          ate frontier --alerts data/generated/docs.parquet \
+            --out docs/report.html --json docs/frontier.json --resamples 2000
+      - name: Build and deploy
+        run: mkdocs gh-deploy --force
