@@ -203,20 +203,36 @@ def test_verdict_is_not_tunable_for_a_measured_noise_rule(config, alerts_factory
     assert not result.tunable
 
 
-def test_false_tunable_rate_is_controlled_above_the_minimum(config, alerts_factory):
-    """ADR-005's measurement, asserted at a size the suite can afford.
+def test_a_false_tunable_above_the_minimum_still_looks_marginal(config, alerts_factory):
+    """What the detection minimum actually buys.
 
-    On a signal carrying no information at all, 20 or more detections must not
-    produce a tunable verdict across a sweep of seeds. Below the minimum the
-    verdict is insufficient evidence, which is also not tunable, so the property
-    under test is simply that no seed yields a tunable call.
+    It does not drive the false tunable rate to zero and nothing can: a 95
+    percent interval is wrong about 5 percent of the time by construction. What
+    it buys is that above the threshold a false positive arrives with a lower
+    bound sitting close to 0.5, so a reader sees weak evidence as weak. Below
+    the threshold the interval is narrow around a wrong estimate and carries no
+    warning at all.
+
+    This replaced a test asserting no seed came back tunable, which was pinning
+    an overclaim in ADR-005 rather than a property of the tool.
     """
     from dataclasses import replace
 
     fast = replace(config, bootstrap_resamples=150, bootstrap_noise_cap=2_000)
-    for seed in range(12):
-        frame = alerts_factory(alerts=8_000, true_positives=25, shift=0.0, seed=200 + seed)
-        assert not rule_frontier(frame, "r", fast).tunable, f"seed {seed}"
+    false_positives = 0
+    for seed in range(25):
+        frame = alerts_factory(alerts=4_000, true_positives=40, shift=0.0, seed=300 + seed)
+        result = rule_frontier(frame, "r", fast)
+        if result.tunable:
+            false_positives += 1
+            assert result.separation_low < 0.58, (
+                f"seed {seed}: a no signal rule read tunable with a lower bound of "
+                f"{result.separation_low:.3f}, which is not marginal"
+            )
+
+    # Roughly the nominal rate. A much higher rate would mean the interval is
+    # not covering; zero across 25 draws would be surprising rather than good.
+    assert false_positives <= 5, f"{false_positives} of 25 is above the nominal rate"
 
 
 def test_first_loss_with_an_all_lossy_curve_is_zero():
