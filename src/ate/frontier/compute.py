@@ -126,7 +126,11 @@ def _separation(signal: np.ndarray, is_tp: np.ndarray) -> float:
     return float(u / (n_pos * n_neg))
 
 
-def _first_loss(volume_removed: np.ndarray, true_positives_lost: np.ndarray) -> float:
+def _first_loss(
+    volume_removed: np.ndarray,
+    true_positives_lost: np.ndarray,
+    true_positive_count: int,
+) -> float:
     """The most volume removable while losing zero true positives.
 
     `true_positives_lost` is non increasing in k, so it reaches zero at the
@@ -134,7 +138,16 @@ def _first_loss(volume_removed: np.ndarray, true_positives_lost: np.ndarray) -> 
     such index is the smallest k that still keeps every detection, which is the
     largest removable volume. Taking the last index instead returns k equal to
     the corpus size, which is always a removable volume of zero.
+
+    A rule with no observed true positives is the dangerous case. Every cut
+    point is then trivially lossless, and reading the curve literally would
+    report that the whole rule can be suppressed for free. That is not what the
+    data says: it says there is no evidence either way, because the window held
+    no detections to lose. The answer is zero, which is the conservative
+    direction, and `tunable` is False for such a rule regardless.
     """
+    if true_positive_count <= 0:
+        return 0.0
     clean = np.flatnonzero(true_positives_lost <= 0.0)
     if clean.size == 0:
         return 0.0
@@ -149,6 +162,8 @@ def _replicate_statistics(signal: np.ndarray, is_tp: np.ndarray) -> tuple[float,
     which a test asserts against the curve based path.
     """
     total = signal.size
+    if not is_tp.any():
+        return 0.0, 0.5
     worst_true_positive = signal[is_tp].min()
     # Every alert scoring below the lowest scoring true positive is removable
     # without losing a detection.
@@ -221,6 +236,7 @@ def rule_frontier(frame: pd.DataFrame, rule: str, config: Config) -> RuleFrontie
 
     volume, lost, thresholds = _curve(signal, is_tp)
     separation = _separation(signal, is_tp)
+    true_positive_count = int(is_tp.sum())
     (first_low, first_high), (sep_low, sep_high) = _bootstrap(signal, is_tp, config)
 
     loss_at = {
@@ -242,9 +258,9 @@ def rule_frontier(frame: pd.DataFrame, rule: str, config: Config) -> RuleFrontie
     return RuleFrontier(
         rule=rule,
         alerts=int(len(subset)),
-        true_positives=int(is_tp.sum()),
+        true_positives=true_positive_count,
         curve=curve,
-        volume_removed_at_first_loss=_first_loss(volume, lost),
+        volume_removed_at_first_loss=_first_loss(volume, lost, true_positive_count),
         loss_at=loss_at,
         first_loss_low=first_low,
         first_loss_high=first_high,
