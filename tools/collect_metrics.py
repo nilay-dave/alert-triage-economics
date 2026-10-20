@@ -84,6 +84,11 @@ def _headline() -> dict:
         "untunable_rules": [f.rule for f in summary.untunable],
         "untunable_volume_pct": round(summary.untunable_volume_pct, 1),
         "untunable_true_positives": sum(f.true_positives for f in summary.untunable),
+        "unmeasured_rule_count": len(summary.unmeasured),
+        "unmeasured_rules": [f.rule for f in summary.unmeasured],
+        "unmeasured_volume_pct": round(summary.unmeasured_volume_pct, 1),
+        "unmeasured_true_positives": sum(f.true_positives for f in summary.unmeasured),
+        "min_true_positives_for_verdict": config.min_true_positives_for_verdict,
         # Keys carry no dots. A dotted key cannot be addressed by the
         # <!--number:path--> mechanism without escaping, and an escaped tag was
         # silently skipped by the checker rather than failing loudly.

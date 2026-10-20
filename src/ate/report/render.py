@@ -27,6 +27,8 @@ def to_dict(summary: StreamSummary) -> dict:
             "minutes_per_alert": summary.minutes_per_alert,
             "untunable_rules": [f.rule for f in summary.untunable],
             "untunable_volume_pct": round(summary.untunable_volume_pct, 2),
+            "unmeasured_rules": [f.rule for f in summary.unmeasured],
+            "unmeasured_volume_pct": round(summary.unmeasured_volume_pct, 2),
             # Keys carry no dots, matching docs/metrics.json, so the same path
             # works in the report, the JSON and the published-number check.
             "blanket_cut_cost": {
@@ -39,6 +41,7 @@ def to_dict(summary: StreamSummary) -> dict:
                 "alerts": f.alerts,
                 "true_positives": f.true_positives,
                 "tunable": f.tunable,
+                "verdict": f.verdict.value,
                 "separation": round(f.separation, 4),
                 "separation_ci": [round(f.separation_low, 4), round(f.separation_high, 4)],
                 "volume_removed_at_first_loss": round(f.volume_removed_at_first_loss, 4),
