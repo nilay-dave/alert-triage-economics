@@ -6,6 +6,7 @@ from dataclasses import replace
 import numpy as np
 import pandas as pd
 import pytest
+from tests.conftest import make_alerts
 
 from ate.frontier.compute import (
     _curve,
@@ -14,7 +15,6 @@ from ate.frontier.compute import (
     _separation,
     rule_frontier,
 )
-from tests.conftest import make_alerts
 
 
 def test_curve_on_a_worked_example():
