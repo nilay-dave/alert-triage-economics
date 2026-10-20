@@ -1,0 +1,7 @@
+# Keep the language bar honest. This project is Python, but the corpus
+# specification and the CI that runs it are a real part of the work.
+*.yml   linguist-detectable=true
+*.yaml  linguist-detectable=true
+*.json  linguist-detectable=true
+*.csv   linguist-detectable=true
+docs/** linguist-documentation=true
