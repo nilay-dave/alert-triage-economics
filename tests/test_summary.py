@@ -99,3 +99,47 @@ def test_summary_with_no_true_positives_anywhere(config):
     assert summary.free_volume == 0
     assert summary.cost_of(0.5) == 0.0
     assert summary.untunable == summary.frontiers
+
+
+def test_free_volume_shrinks_as_the_window_grows(config):
+    """ADR-004's finding, pinned.
+
+    Free volume is an order statistic of the minimum: it is set by where the
+    single lowest scoring detection sits, so a longer window finds a lower one
+    and the figure falls. If a change ever makes this look stable, something has
+    been smoothed over and the README's caveat has become false.
+    """
+    from dataclasses import replace
+
+    fast = replace(config, bootstrap_resamples=100, bootstrap_noise_cap=2_000)
+    measured = []
+    for alerts in (5_000, 40_000, 200_000):
+        rng = np.random.default_rng(3)
+        true_positives = max(1, int(alerts * 0.004))
+        is_tp = np.zeros(alerts, dtype=bool)
+        is_tp[:true_positives] = True
+        signal = rng.standard_normal(alerts) + np.where(is_tp, 1.4, 0.0)
+        frame = pd.DataFrame({"rule": "r", "signal": signal, "is_true_positive": is_tp})
+        measured.append(analyse(frame, fast).free_volume_pct)
+
+    assert measured == sorted(measured, reverse=True), measured
+    assert measured[0] > measured[-1] * 1.5
+
+
+def test_blanket_cut_cost_is_stable_across_window_sizes(config):
+    """The counterpart. The number the README leads with has to hold whether the
+    analysis ran on a week or a quarter."""
+    from dataclasses import replace
+
+    fast = replace(config, bootstrap_resamples=100, bootstrap_noise_cap=2_000)
+    measured = []
+    for alerts in (20_000, 200_000):
+        rng = np.random.default_rng(5)
+        true_positives = max(1, int(alerts * 0.004))
+        is_tp = np.zeros(alerts, dtype=bool)
+        is_tp[:true_positives] = True
+        signal = rng.standard_normal(alerts) + np.where(is_tp, 1.4, 0.0)
+        frame = pd.DataFrame({"rule": "r", "signal": signal, "is_true_positive": is_tp})
+        measured.append(analyse(frame, fast).cost_of(0.5))
+
+    assert abs(measured[0] - measured[1]) < 5.0, measured
