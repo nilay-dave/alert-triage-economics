@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Alert triage economics</title>
+<style>
+  :root {
+    --bg: #ffffff; --fg: #141617; --muted: #4a5154; --line: #d8dcde;
+    --panel: #f5f6f7; --bad: #96201a; --ok: #17593a;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #121415; --fg: #e8eaeb; --muted: #9aa2a5; --line: #2a2e30;
+      --panel: #1a1d1e; --bad: #ef6a5f; --ok: #4fb183;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--fg);
+    font: 15px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif; }
+  .wrap { max-width: 1060px; margin: 0 auto; padding: 32px 16px 64px; }
+  h1 { font-size: 22px; margin: 0 0 4px; letter-spacing: -0.01em; }
+  h2 { font-size: 15px; text-transform: uppercase; letter-spacing: 0.07em;
+    color: var(--muted); margin: 40px 0 12px; font-weight: 600; }
+  .sub { color: var(--muted); margin: 0 0 28px; font-size: 13px; }
+  .headline { border: 1px solid var(--line); border-radius: 10px; padding: 20px 22px;
+    background: var(--panel); margin-bottom: 20px; }
+  .big { font-size: 42px; font-weight: 650; line-height: 1; color: var(--bad);
+    font-variant-numeric: tabular-nums; }
+  .big small { font-size: 19px; font-weight: 500; }
+  .headline p { margin: 10px 0 0; max-width: 68ch; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(170px, 1fr)); gap: 10px; }
+  .tile { border: 1px solid var(--line); border-radius: 8px; padding: 12px 14px; }
+  .tile .n { font-size: 23px; font-weight: 600; font-variant-numeric: tabular-nums; }
+  .tile .l { font-size: 12px; color: var(--muted); text-transform: uppercase; letter-spacing: 0.05em; }
+  figure { margin: 18px 0; }
+  figure img { width: 100%; height: auto; border: 1px solid var(--line); border-radius: 8px; }
+  figcaption { color: var(--muted); font-size: 12.5px; margin-top: 8px; }
+  table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
+  caption { text-align: left; font-size: 12.5px; color: var(--muted); padding-bottom: 10px; }
+  th { text-align: left; font-size: 11.5px; text-transform: uppercase; letter-spacing: 0.06em;
+    color: var(--muted); border-bottom: 1px solid var(--line); padding: 8px 10px 8px 0; font-weight: 600; }
+  td { padding: 9px 10px 9px 0; border-bottom: 1px solid var(--line); vertical-align: top;
+    font-variant-numeric: tabular-nums; }
+  code { font: 12.5px ui-monospace, SFMono-Regular, Menlo, monospace;
+    background: var(--panel); padding: 1px 5px; border-radius: 4px; }
+  .v { font-weight: 600; font-size: 12px; text-transform: uppercase; letter-spacing: 0.04em; white-space: nowrap; }
+  .v::before { margin-right: 6px; }
+  .v-no { color: var(--bad); }
+  .v-no::before { content: "x"; }
+  .v-yes { color: var(--ok); }
+  .v-yes::before { content: "ok"; font-size: 10px; }
+  .ci { color: var(--muted); font-size: 12px; }
+  .skip { position: absolute; left: -9999px; }
+  .skip:focus { left: 8px; top: 8px; background: var(--bg); padding: 10px 14px;
+    border: 1px solid var(--line); border-radius: 6px; z-index: 10; }
+  footer { margin-top: 44px; padding-top: 16px; border-top: 1px solid var(--line);
+    color: var(--muted); font-size: 12.5px; }
+</style>
+</head>
+<body>
+<a class="skip" href="#rules">Skip to the per rule table</a>
+<div class="wrap">
+  <h1>Alert triage economics</h1>
+  <p class="sub">
+    500,000 alerts, 1,676 true positives,
+    one in 298. 8 rules analysed.
+  </p>
+
+  <div class="headline">
+    <div class="big" role="img"
+         aria-label="Removing half of every rule's volume costs 15.6 percent of true positives">
+      15.6<small>%</small>
+    </div>
+    <p>
+      of true positives are lost if half of every rule's alert volume is removed. That is the number
+      behind a claim like "we cut alert volume in half", which is usually reported without it.
+    </p>
+  </div>
+
+  <div class="grid" role="list" aria-label="Headline figures">
+    <div class="tile" role="listitem">
+      <div class="n">6.5%</div>
+      <div class="l">removable at zero loss</div>
+    </div>
+    <div class="tile" role="listitem">
+      <div class="n">4,320</div>
+      <div class="l">analyst hours, at 8.0 min per alert</div>
+    </div>
+    <div class="tile" role="listitem">
+      <div class="n">1</div>
+      <div class="l">rules with no usable signal</div>
+    </div>
+    <div class="tile" role="listitem">
+      <div class="n">9.0%</div>
+      <div class="l">of volume from those rules</div>
+    </div>
+  </div>
+
+  <h2>The frontier</h2>
+  <figure>
+    <img src="charts/frontier.png"
+         alt="Line chart of true positives lost against alert volume removed, one line per rule. Rules with a usable signal bow below the diagonal; the rule with no usable signal tracks it.">
+    <figcaption>
+      Each line is one rule. The dotted diagonal is what tuning at random looks like: remove half the
+      volume, lose half the detections. A line that bows below it is a rule worth tuning. A line on or
+      above it is a rule being tuned by deleting detections.
+    </figcaption>
+  </figure>
+
+  <h2>What a blanket cut costs</h2>
+  <figure>
+    <img src="charts/blanket-cut.png"
+         alt="Bar chart of true positives lost at each level of blanket volume reduction.">
+    <figcaption>
+      A flat percentage cut applied to every rule, including the ones that cannot be tuned. This is
+      what an uncosted volume reduction target actually buys.
+    </figcaption>
+  </figure>
+
+  <h2 id="rules">Per rule</h2>
+  <table>
+    <caption>
+      Sorted by alert volume. Separation is the probability a random true positive outscores a random
+      noise alert; 0.5 is no information. Tunability is decided by the interval, not the point
+      estimate, because a rule with a dozen detections can look separable by chance.
+    </caption>
+    <thead>
+      <tr>
+        <th>Rule</th><th>Alerts</th><th>True pos.</th><th>Separation</th>
+        <th>Removable free</th><th>Lost at 50%</th><th>Tunable</th>
+      </tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td><code>impossible_travel</code></td>
+        <td>104,981</td>
+        <td>238</td>
+        <td>
+          0.836
+          <div class="ci">[0.813, 0.859]</div>
+        </td>
+        <td>
+          8.1%
+          <div class="ci">[7.7, 21.3]</div>
+        </td>
+        <td>9.7%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>failed_logon_burst</code></td>
+        <td>89,871</td>
+        <td>111</td>
+        <td>
+          0.740
+          <div class="ci">[0.693, 0.786]</div>
+        </td>
+        <td>
+          3.3%
+          <div class="ci">[3.1, 19.1]</div>
+        </td>
+        <td>19.8%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>powershell_encoded_command</code></td>
+        <td>69,770</td>
+        <td>411</td>
+        <td>
+          0.775
+          <div class="ci">[0.755, 0.799]</div>
+        </td>
+        <td>
+          2.7%
+          <div class="ci">[2.4, 11.3]</div>
+        </td>
+        <td>15.3%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>edr_suspicious_parent</code></td>
+        <td>59,962</td>
+        <td>276</td>
+        <td>
+          0.892
+          <div class="ci">[0.875, 0.906]</div>
+        </td>
+        <td>
+          16.5%
+          <div class="ci">[15.9, 42.4]</div>
+        </td>
+        <td>2.2%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>dlp_bulk_download</code></td>
+        <td>55,553</td>
+        <td>86</td>
+        <td>
+          0.641
+          <div class="ci">[0.582, 0.700]</div>
+        </td>
+        <td>
+          1.2%
+          <div class="ci">[1.0, 13.9]</div>
+        </td>
+        <td>30.2%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>ids_signature_generic</code></td>
+        <td>44,928</td>
+        <td>12</td>
+        <td>
+          0.536
+          <div class="ci">[0.382, 0.695]</div>
+        </td>
+        <td>
+          12.7%
+          <div class="ci">[12.4, 33.9]</div>
+        </td>
+        <td>50.0%</td>
+        <td class="v v-no">no</td>
+      </tr>
+      <tr>
+        <td><code>new_admin_grant</code></td>
+        <td>40,250</td>
+        <td>465</td>
+        <td>
+          0.692
+          <div class="ci">[0.668, 0.715]</div>
+        </td>
+        <td>
+          0.7%
+          <div class="ci">[0.6, 8.0]</div>
+        </td>
+        <td>23.2%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+      <tr>
+        <td><code>cloud_api_anomaly</code></td>
+        <td>34,685</td>
+        <td>77</td>
+        <td>
+          0.822
+          <div class="ci">[0.777, 0.860]</div>
+        </td>
+        <td>
+          7.2%
+          <div class="ci">[6.9, 27.5]</div>
+        </td>
+        <td>10.4%</td>
+        <td class="v v-yes">yes</td>
+      </tr>
+    </tbody>
+  </table>
+
+
+  <footer>
+    Intervals are 95 percent bootstrap percentile intervals, stratified so every
+    replicate holds the same number of true positives as the original.
+    When the corpus is the bundled synthetic one, every number on this page is a simulation.
+  </footer>
+</div>
+</body>
+</html>
