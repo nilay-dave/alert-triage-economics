@@ -60,9 +60,26 @@ the strength of twelve detections. Only the interval reveals it. That single
 contrast is the argument for ADR-001 made concrete, and it would not exist if
 the corpus had been built to be tuned successfully.
 
-The honest limitation: the signal model is two normal distributions, one shifted.
-That is a textbook model, not a claim about how real alert signals are
-distributed, which are often multimodal and bounded. What it buys is that the
-frontier has a known correct shape, so the tool's output can be checked against
-something rather than merely inspected. A real corpus would be more faithful and
-less checkable, and the roadmap records running against one as the next step.
+The honest limitation: the signal model is two normal distributions, one
+shifted. That is a textbook model, not a claim about how real alert signals are
+distributed, which are often bounded, skewed or piled up on round numbers.
+
+It matters less than it first appears, and that is worth being precise about
+rather than waving away. Both published statistics are rank based: separation is
+the normalised Mann Whitney U, and removable volume is a position in the sorted
+order. Neither changes under any strictly increasing transform of the signal. A
+real signal that is log normal, or bounded to 0 and 1, or rounded to a 0 to 10
+confidence score, has the same separation as the normal variate it is a
+transform of, and its frontier has the same shape.
+
+So the normality of the generator is not load bearing for anything the tool
+publishes. `tests/test_frontier.py::test_separation_is_invariant_under_a_monotone_transform`
+asserts this across five transforms including a heavily tied discrete score,
+rather than leaving it as a claim in a document.
+
+What does change under a real distribution is the relationship between a
+threshold and a volume, which is why the report shows thresholds on the curve in
+the signal's own units and never interprets them.
+
+A real corpus would still be more faithful, and the roadmap records running
+against one as the next step.
