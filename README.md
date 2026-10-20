@@ -62,7 +62,20 @@ under reweighting those six, and it has nothing to compare them against to
 notice they are unrepresentative. If all six score high, every replicate scores
 high.
 
-So there are three verdicts here, not two. Below <!--number:analysis.min_true_positives_for_verdict-->20<!--/number--> detections, measured as the point where a no-signal rule stopped being green lit across a sweep, the answer is that there is not enough evidence to say, and unmeasured never reads as tunable. [ADR-005](docs/adr/adr-005-insufficient-evidence.md) has the measurement.
+So there are three verdicts here, not two. Below <!--number:analysis.min_true_positives_for_verdict-->20<!--/number--> detections the answer is that there is not enough evidence to say, and unmeasured never reads as tunable.
+
+The threshold does not make false positives go away, and
+[ADR-005](docs/adr/adr-005-insufficient-evidence.md) now says so because the
+first version of it claimed otherwise. That claim rested on zero hits in 60
+draws, which is consistent with any rate under about 5 percent; at 250 draws the
+rate above the threshold is 2 to 5 percent, which is the nominal rate a 95
+percent interval promises and which nothing can remove.
+
+What the threshold buys is narrower than that and more useful. Above it, a false
+tunable verdict arrives with a lower bound sitting on 0.5, and a reader sees
+weak evidence as weak. Below it, the interval is narrow around a wrong estimate
+and carries no warning at all. The threshold keeps false positives in the regime
+where the interval still warns you about them.
 
 The distinction matters because the actions differ. An untunable rule needs a
 better signal. An unmeasured rule needs a longer window. Collapsing the two
@@ -192,7 +205,7 @@ Four decisions in [`docs/adr/`](docs/adr/), each with the options rejected and w
 - [ADR-002](docs/adr/adr-002-capped-noise-pool.md): capping the resampled noise pool, with the table showing it does not move the interval.
 - [ADR-003](docs/adr/adr-003-synthetic-corpus.md): shipping a synthetic corpus, and putting a rule in it that cannot be tuned.
 - [ADR-004](docs/adr/adr-004-which-number-to-lead-with.md): the boring choice. Lead with the stable number rather than the intuitive one.
-- [ADR-005](docs/adr/adr-005-insufficient-evidence.md): a third verdict, because an interval cannot tell you that your sample is unrepresentative.
+- [ADR-005](docs/adr/adr-005-insufficient-evidence.md): a third verdict, because an interval cannot tell you that your sample is unrepresentative. Includes a correction to its own first version, which read a measured zero from an underpowered sweep.
 
 ## Intentionally out of scope
 
