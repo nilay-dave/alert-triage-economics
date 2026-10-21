@@ -30,6 +30,13 @@ jobs:
         run: pip install -e ".[dev]"
       - name: Lint
         run: ruff check src tests tools benchmark scripts
+      - name: House style
+        # check_dashes walks the files git tracks rather than the working tree,
+        # so a vendored corpus or an untracked scratch file cannot fail the
+        # build for text nobody in this repository wrote.
+        run: |
+          python tools/check_dashes.py
+          python tools/check_tables.py
       - name: Test
         run: pytest --cov=ate --cov-report=term-missing --cov-report=xml --cov-fail-under=90
       - name: Every declared dependency is used
