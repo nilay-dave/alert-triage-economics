@@ -28,6 +28,12 @@ repos:
         language: system
         types: [text]
 
+      - id: tables
+        name: markdown tables are well formed
+        entry: python tools/check_tables.py
+        language: system
+        pass_filenames: false
+
       - id: commit-subject-length
         name: commit subject at most 72 characters
         entry: python tools/check_commit_subject.py
