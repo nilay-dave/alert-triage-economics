@@ -13,6 +13,7 @@ htmlcov/
 site/
 data/generated/
 docs/frontier.html
+docs/report.html
 docs/frontier.json
 
 # The two charts the README embeds are tracked, because a README that renders
