@@ -3,6 +3,9 @@ name: ci
 on:
   push:
     branches: [main]
+    # Tags too, so a release that publishes to PyPI has a green build against
+    # the exact commit being published rather than against main.
+    tags: ['v*']
   pull_request:
   workflow_dispatch:
 
