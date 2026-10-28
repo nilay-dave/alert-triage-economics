@@ -29,15 +29,18 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff>=0.6"]
+# ruff is pinned exactly so the lint gate depends on the code rather than on
+# the day the build ran. A floor of 0.6 let CI install any later release, and
+# ruff adds rules to the selected E, F, I, UP and B groups between versions.
+dev = ["pytest>=8.0", "pytest-cov>=5.0", "ruff==0.17.1"]
 
 [project.scripts]
 ate = "ate.cli:app"
 
 [project.urls]
-Homepage = "https://github.com/__GITHUB_USERNAME__/alert-triage-economics"
-Documentation = "https://__GITHUB_USERNAME__.github.io/alert-triage-economics/"
-Issues = "https://github.com/__GITHUB_USERNAME__/alert-triage-economics/issues"
+Homepage = "https://github.com/nilay-dave/alert-triage-economics"
+Documentation = "https://nilay-dave.github.io/alert-triage-economics/"
+Issues = "https://github.com/nilay-dave/alert-triage-economics/issues"
 
 [tool.setuptools.packages.find]
 where = ["src"]

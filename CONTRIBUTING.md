@@ -3,7 +3,7 @@
 ## Getting set up
 
 ```bash
-git clone https://github.com/__GITHUB_USERNAME__/alert-triage-economics.git
+git clone https://github.com/nilay-dave/alert-triage-economics.git
 cd alert-triage-economics
 python -m venv .venv && source .venv/bin/activate
 make install

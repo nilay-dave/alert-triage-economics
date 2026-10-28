@@ -2,10 +2,10 @@
 
 **Replays labelled alert streams to cost a tuning change. On the bundled corpus, halving alert volume costs <!--number:analysis.blanket_cut_cost.cut_50-->15.6<!--/number--> percent of true positives.**
 
-[![ci](https://github.com/__GITHUB_USERNAME__/alert-triage-economics/actions/workflows/ci.yml/badge.svg)](https://github.com/__GITHUB_USERNAME__/alert-triage-economics/actions/workflows/ci.yml)
-[![coverage](https://img.shields.io/endpoint?url=https://__GITHUB_USERNAME__.github.io/alert-triage-economics/badges/coverage.json)](https://github.com/__GITHUB_USERNAME__/alert-triage-economics/actions/workflows/coverage-badge.yml)
-[![cost of halving](https://img.shields.io/endpoint?url=https://__GITHUB_USERNAME__.github.io/alert-triage-economics/badges/halfcost.json)](docs/metrics.json)
-[![docs](https://img.shields.io/badge/docs-mkdocs%20material-blue)](https://__GITHUB_USERNAME__.github.io/alert-triage-economics/)
+[![ci](https://github.com/nilay-dave/alert-triage-economics/actions/workflows/ci.yml/badge.svg)](https://github.com/nilay-dave/alert-triage-economics/actions/workflows/ci.yml)
+[![coverage](https://img.shields.io/endpoint?url=https://nilay-dave.github.io/alert-triage-economics/badges/coverage.json)](https://github.com/nilay-dave/alert-triage-economics/actions/workflows/coverage-badge.yml)
+[![cost of halving](https://img.shields.io/endpoint?url=https://nilay-dave.github.io/alert-triage-economics/badges/halfcost.json)](docs/metrics.json)
+[![docs](https://img.shields.io/badge/docs-mkdocs%20material-blue)](https://nilay-dave.github.io/alert-triage-economics/)
 [![license](https://img.shields.io/badge/license-MIT-green)](LICENSE)
 
 ## What this solves
@@ -145,7 +145,7 @@ alert history.
 Prerequisites: Python 3.11 or newer, and git. No containers, no SIEM, no credentials.
 
 ```bash
-git clone https://github.com/__GITHUB_USERNAME__/alert-triage-economics.git
+git clone https://github.com/nilay-dave/alert-triage-economics.git
 cd alert-triage-economics
 python -m venv .venv && source .venv/bin/activate
 make install

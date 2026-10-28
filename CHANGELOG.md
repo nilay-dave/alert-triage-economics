@@ -63,7 +63,7 @@ Core analysis.
 ### Fixed
 - `_first_loss` read the wrong end of the zero loss run, so removable volume was exactly 0.0 for every rule. The value was plausible enough to be rationalised rather than noticed, and what found it was a ten alert example worked out on paper first.
 
-[Unreleased]: https://github.com/__GITHUB_USERNAME__/alert-triage-economics/compare/v0.3.0...HEAD
-[0.3.0]: https://github.com/__GITHUB_USERNAME__/alert-triage-economics/compare/v0.2.0...v0.3.0
-[0.2.0]: https://github.com/__GITHUB_USERNAME__/alert-triage-economics/compare/v0.1.0...v0.2.0
-[0.1.0]: https://github.com/__GITHUB_USERNAME__/alert-triage-economics/releases/tag/v0.1.0
+[Unreleased]: https://github.com/nilay-dave/alert-triage-economics/compare/v0.3.0...HEAD
+[0.3.0]: https://github.com/nilay-dave/alert-triage-economics/compare/v0.2.0...v0.3.0
+[0.2.0]: https://github.com/nilay-dave/alert-triage-economics/compare/v0.1.0...v0.2.0
+[0.1.0]: https://github.com/nilay-dave/alert-triage-economics/releases/tag/v0.1.0

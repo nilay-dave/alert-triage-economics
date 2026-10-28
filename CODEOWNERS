@@ -1,7 +1,7 @@
 # Default owner for everything in this repository.
-*       @__GITHUB_USERNAME__
+*       @nilay-dave
 
 # The corpus specification and the statistics are the two places where a wrong
 # change produces a confidently wrong recommendation rather than an error.
-/src/ate/corpus/rules.yml   @__GITHUB_USERNAME__
-/src/ate/frontier/          @__GITHUB_USERNAME__
+/src/ate/corpus/rules.yml   @nilay-dave
+/src/ate/frontier/          @nilay-dave

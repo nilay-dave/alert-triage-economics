@@ -1,7 +1,7 @@
 site_name: alert-triage-economics
 site_description: Measure what an alert tuning change costs in missed detections.
-repo_url: https://github.com/__GITHUB_USERNAME__/alert-triage-economics
-repo_name: __GITHUB_USERNAME__/alert-triage-economics
+repo_url: https://github.com/nilay-dave/alert-triage-economics
+repo_name: nilay-dave/alert-triage-economics
 edit_uri: edit/main/docs/
 
 theme:
