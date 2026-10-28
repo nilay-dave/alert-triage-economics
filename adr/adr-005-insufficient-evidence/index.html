@@ -1,0 +1,1102 @@
+
+<!doctype html>
+<html lang="en" class="no-js">
+  <head>
+    
+      <meta charset="utf-8">
+      <meta name="viewport" content="width=device-width,initial-scale=1">
+      
+        <meta name="description" content="Measure what an alert tuning change costs in missed detections.">
+      
+      
+      
+      
+        <link rel="prev" href="../adr-004-which-number-to-lead-with/">
+      
+      
+        <link rel="next" href="../../report.html">
+      
+      
+        
+      
+      
+      <link rel="icon" href="../../assets/images/favicon.png">
+      <meta name="generator" content="mkdocs-1.6.1, mkdocs-material-9.8.0">
+    
+    
+      
+        <title>ADR-005 Insufficient evidence - alert-triage-economics</title>
+      
+    
+    
+      <link rel="stylesheet" href="../../assets/stylesheets/main.57a0d79d.min.css">
+      
+        
+        <link rel="stylesheet" href="../../assets/stylesheets/palette.fb2fffe2.min.css">
+      
+      
+
+
+    
+    
+      
+    
+    
+      
+        
+        
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+        <link rel="stylesheet" href="https://fonts.googleapis.com/css?family=Roboto:300,300i,400,400i,700,700i%7CRoboto+Mono:400,400i,700,700i&display=fallback">
+        <style>:root{--md-text-font:"Roboto";--md-code-font:"Roboto Mono"}</style>
+      
+    
+    
+    <script>__md_scope=new URL("../..",location),__md_hash=e=>[...e].reduce(((e,_)=>(e<<5)-e+_.charCodeAt(0)),0),__md_get=(e,_=localStorage,t=__md_scope)=>JSON.parse(_.getItem(t.pathname+"."+e)),__md_set=(e,_,t=localStorage,a=__md_scope)=>{try{t.setItem(a.pathname+"."+e,JSON.stringify(_))}catch(e){}}</script>
+    
+      
+
+    
+    
+  </head>
+  
+  
+    
+    
+      
+    
+    
+    
+    
+    <body dir="ltr" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo">
+  
+    
+    <input class="md-toggle" data-md-toggle="drawer" type="checkbox" id="__drawer" autocomplete="off">
+    <input class="md-toggle" data-md-toggle="search" type="checkbox" id="__search" autocomplete="off">
+    <label class="md-overlay" for="__drawer"></label>
+    <div data-md-component="skip">
+      
+        
+        <a href="#adr-005-a-third-verdict-for-rules-with-too-few-detections" class="md-skip">
+          Skip to content
+        </a>
+      
+    </div>
+    <div data-md-component="announce">
+      
+    </div>
+    
+    
+      
+
+  
+
+<header class="md-header md-header--shadow" data-md-component="header">
+  <nav class="md-header__inner md-grid" aria-label="Header">
+    <a href="../.." title="alert-triage-economics" class="md-header__button md-logo" aria-label="alert-triage-economics" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    <label class="md-header__button md-icon" for="__drawer">
+      
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M3 6h18v2H3zm0 5h18v2H3zm0 5h18v2H3z"/></svg>
+    </label>
+    <div class="md-header__title" data-md-component="header-title">
+      <div class="md-header__ellipsis">
+        <div class="md-header__topic">
+          <span class="md-ellipsis">
+            alert-triage-economics
+          </span>
+        </div>
+        <div class="md-header__topic" data-md-component="header-topic">
+          <span class="md-ellipsis">
+            
+              ADR-005 Insufficient evidence
+            
+          </span>
+        </div>
+      </div>
+    </div>
+    
+      
+        <form class="md-header__option" data-md-component="palette">
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: light)" data-md-color-scheme="default" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to dark mode"  type="radio" name="__palette" id="__palette_0">
+    
+      <label class="md-header__button md-icon" title="Switch to dark mode" for="__palette_1" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="m17.75 4.09-2.53 1.94.91 3.06-2.63-1.81-2.63 1.81.91-3.06-2.53-1.94L12.44 4l1.06-3 1.06 3zm3.5 6.91-1.64 1.25.59 1.98-1.7-1.17-1.7 1.17.59-1.98L15.75 11l2.06-.05L18.5 9l.69 1.95zm-2.28 4.95c.83-.08 1.72 1.1 1.19 1.85-.32.45-.66.87-1.08 1.27C15.17 23 8.84 23 4.94 19.07c-3.91-3.9-3.91-10.24 0-14.14.4-.4.82-.76 1.27-1.08.75-.53 1.93.36 1.85 1.19-.27 2.86.69 5.83 2.89 8.02a9.96 9.96 0 0 0 8.02 2.89m-1.64 2.02a12.08 12.08 0 0 1-7.8-3.47c-2.17-2.19-3.33-5-3.49-7.82-2.81 3.14-2.7 7.96.31 10.98 3.02 3.01 7.84 3.12 10.98.31"/></svg>
+      </label>
+    
+  
+    
+    
+    
+    <input class="md-option" data-md-color-media="(prefers-color-scheme: dark)" data-md-color-scheme="slate" data-md-color-primary="blue-grey" data-md-color-accent="indigo"  aria-label="Switch to light mode"  type="radio" name="__palette" id="__palette_1">
+    
+      <label class="md-header__button md-icon" title="Switch to light mode" for="__palette_0" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 7a5 5 0 0 1 5 5 5 5 0 0 1-5 5 5 5 0 0 1-5-5 5 5 0 0 1 5-5m0 2a3 3 0 0 0-3 3 3 3 0 0 0 3 3 3 3 0 0 0 3-3 3 3 0 0 0-3-3m0-7 2.39 3.42C13.65 5.15 12.84 5 12 5s-1.65.15-2.39.42zM3.34 7l4.16-.35A7.2 7.2 0 0 0 5.94 8.5c-.44.74-.69 1.5-.83 2.29zm.02 10 1.76-3.77a7.131 7.131 0 0 0 2.38 4.14zM20.65 7l-1.77 3.79a7.02 7.02 0 0 0-2.38-4.15zm-.01 10-4.14.36c.59-.51 1.12-1.14 1.54-1.86.42-.73.69-1.5.83-2.29zM12 22l-2.41-3.44c.74.27 1.55.44 2.41.44.82 0 1.63-.17 2.37-.44z"/></svg>
+      </label>
+    
+  
+</form>
+      
+    
+    
+      <script>var palette=__md_get("__palette");if(palette&&palette.color){if("(prefers-color-scheme)"===palette.color.media){var media=matchMedia("(prefers-color-scheme: light)"),input=document.querySelector(media.matches?"[data-md-color-media='(prefers-color-scheme: light)']":"[data-md-color-media='(prefers-color-scheme: dark)']");palette.color.media=input.getAttribute("data-md-color-media"),palette.color.scheme=input.getAttribute("data-md-color-scheme"),palette.color.primary=input.getAttribute("data-md-color-primary"),palette.color.accent=input.getAttribute("data-md-color-accent")}for(var[key,value]of Object.entries(palette.color))document.body.setAttribute("data-md-color-"+key,value)}</script>
+    
+    
+    
+      
+      
+        <label class="md-header__button md-icon" for="__search">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        </label>
+        <div class="md-search" data-md-component="search" role="dialog">
+  <label class="md-search__overlay" for="__search"></label>
+  <div class="md-search__inner" role="search">
+    <form class="md-search__form" name="search">
+      <input type="text" class="md-search__input" name="query" aria-label="Search" placeholder="Search" autocapitalize="off" autocorrect="off" autocomplete="off" spellcheck="false" data-md-component="search-query" required>
+      <label class="md-search__icon md-icon" for="__search">
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M9.5 3A6.5 6.5 0 0 1 16 9.5c0 1.61-.59 3.09-1.56 4.23l.27.27h.79l5 5-1.5 1.5-5-5v-.79l-.27-.27A6.52 6.52 0 0 1 9.5 16 6.5 6.5 0 0 1 3 9.5 6.5 6.5 0 0 1 9.5 3m0 2C7 5 5 7 5 9.5S7 14 9.5 14 14 12 14 9.5 12 5 9.5 5"/></svg>
+        
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M20 11v2H8l5.5 5.5-1.42 1.42L4.16 12l7.92-7.92L13.5 5.5 8 11z"/></svg>
+      </label>
+      <nav class="md-search__options" aria-label="Search">
+        
+        <button type="reset" class="md-search__icon md-icon" title="Clear" aria-label="Clear" tabindex="-1">
+          
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M19 6.41 17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+        </button>
+      </nav>
+      
+    </form>
+    <div class="md-search__output">
+      <div class="md-search__scrollwrap" tabindex="0" data-md-scrollfix>
+        <div class="md-search-result" data-md-component="search-result">
+          <div class="md-search-result__meta">
+            Initializing search
+          </div>
+          <ol class="md-search-result__list" role="presentation"></ol>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+      
+    
+    
+      <div class="md-header__source">
+        <a href="https://github.com/__GITHUB_USERNAME__/alert-triage-economics" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    __GITHUB_USERNAME__/alert-triage-economics
+  </div>
+</a>
+      </div>
+    
+  </nav>
+  
+</header>
+    
+    <div class="md-container" data-md-component="container">
+      
+      
+        
+          
+        
+      
+      <main class="md-main" data-md-component="main">
+        <div class="md-main__inner md-grid">
+          
+            
+              
+              <div class="md-sidebar md-sidebar--primary" data-md-component="sidebar" data-md-type="navigation" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+
+
+<nav class="md-nav md-nav--primary" aria-label="Navigation" data-md-level="0">
+  <label class="md-nav__title" for="__drawer">
+    <a href="../.." title="alert-triage-economics" class="md-nav__button md-logo" aria-label="alert-triage-economics" data-md-component="logo">
+      
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M12 8a3 3 0 0 0 3-3 3 3 0 0 0-3-3 3 3 0 0 0-3 3 3 3 0 0 0 3 3m0 3.54C9.64 9.35 6.5 8 3 8v11c3.5 0 6.64 1.35 9 3.54 2.36-2.19 5.5-3.54 9-3.54V8c-3.5 0-6.64 1.35-9 3.54"/></svg>
+
+    </a>
+    alert-triage-economics
+  </label>
+  
+    <div class="md-nav__source">
+      <a href="https://github.com/__GITHUB_USERNAME__/alert-triage-economics" title="Go to repository" class="md-source" data-md-component="source">
+  <div class="md-source__icon md-icon">
+    
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 448 512"><!--! Font Awesome Free 7.1.0 by @fontawesome - https://fontawesome.com License - https://fontawesome.com/license/free (Icons: CC BY 4.0, Fonts: SIL OFL 1.1, Code: MIT License) Copyright 2025 Fonticons, Inc.--><path d="M439.6 236.1 244 40.5c-5.4-5.5-12.8-8.5-20.4-8.5s-15 3-20.4 8.4L162.5 81l51.5 51.5c27.1-9.1 52.7 16.8 43.4 43.7l49.7 49.7c34.2-11.8 61.2 31 35.5 56.7-26.5 26.5-70.2-2.9-56-37.3L240.3 199v121.9c25.3 12.5 22.3 41.8 9.1 55-6.4 6.4-15.2 10.1-24.3 10.1s-17.8-3.6-24.3-10.1c-17.6-17.6-11.1-46.9 11.2-56v-123c-20.8-8.5-24.6-30.7-18.6-45L142.6 101 8.5 235.1C3 240.6 0 247.9 0 255.5s3 15 8.5 20.4l195.6 195.7c5.4 5.4 12.7 8.4 20.4 8.4s15-3 20.4-8.4l194.7-194.7c5.4-5.4 8.4-12.8 8.4-20.4s-3-15-8.4-20.4"/></svg>
+  </div>
+  <div class="md-source__repository">
+    __GITHUB_USERNAME__/alert-triage-economics
+  </div>
+</a>
+    </div>
+  
+  <ul class="md-nav__list" data-md-scrollfix>
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../.." class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Overview
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../reading-the-frontier/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Reading the frontier
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../statistics/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    The statistics
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+      
+      
+  
+  
+    
+  
+  
+  
+    
+    
+    
+    
+      
+        
+        
+      
+    
+    
+    <li class="md-nav__item md-nav__item--active md-nav__item--section md-nav__item--nested">
+      
+        
+        
+        <input class="md-nav__toggle md-toggle " type="checkbox" id="__nav_4" checked>
+        
+          
+          <label class="md-nav__link" for="__nav_4" id="__nav_4_label" tabindex="">
+            
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Decisions
+  
+
+    
+  </span>
+  
+  
+
+            <span class="md-nav__icon md-icon"></span>
+          </label>
+        
+        <nav class="md-nav" data-md-level="1" aria-labelledby="__nav_4_label" aria-expanded="true">
+          <label class="md-nav__title" for="__nav_4">
+            <span class="md-nav__icon md-icon"></span>
+            
+  
+    Decisions
+  
+
+          </label>
+          <ul class="md-nav__list" data-md-scrollfix>
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-001-bootstrap-over-point-estimates/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-001 Bootstrap over point estimates
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-002-capped-noise-pool/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-002 Capped noise pool
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-003-synthetic-corpus/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-003 Synthetic corpus
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../adr-004-which-number-to-lead-with/" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-004 Which number to lead with
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+              
+            
+              
+                
+  
+  
+    
+  
+  
+  
+    <li class="md-nav__item md-nav__item--active">
+      
+      <input class="md-nav__toggle md-toggle" type="checkbox" id="__toc">
+      
+      
+        
+      
+      
+        <label class="md-nav__link md-nav__link--active" for="__toc">
+          
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Insufficient evidence
+  
+
+    
+  </span>
+  
+  
+
+          <span class="md-nav__icon md-icon"></span>
+        </label>
+      
+      <a href="./" class="md-nav__link md-nav__link--active">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    ADR-005 Insufficient evidence
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+      
+        
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-interval-cannot-catch-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the interval cannot catch this
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was measured
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What was measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correction-the-zeros-above-were-underpowered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correction: the zeros above were underpowered
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-threshold-actually-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the threshold actually buys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+      
+    </li>
+  
+
+              
+            
+          </ul>
+        </nav>
+      
+    </li>
+  
+
+    
+      
+      
+  
+  
+  
+  
+    <li class="md-nav__item">
+      <a href="../../report.html" class="md-nav__link">
+        
+  
+  
+  <span class="md-ellipsis">
+    
+  
+    Example report
+  
+
+    
+  </span>
+  
+  
+
+      </a>
+    </li>
+  
+
+    
+  </ul>
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+            
+              
+              <div class="md-sidebar md-sidebar--secondary" data-md-component="sidebar" data-md-type="toc" >
+                <div class="md-sidebar__scrollwrap">
+                  <div class="md-sidebar__inner">
+                    
+
+<nav class="md-nav md-nav--secondary" aria-label="Table of contents">
+  
+  
+  
+    
+  
+  
+    <label class="md-nav__title" for="__toc">
+      <span class="md-nav__icon md-icon"></span>
+      Table of contents
+    </label>
+    <ul class="md-nav__list" data-md-component="toc" data-md-scrollfix>
+      
+        <li class="md-nav__item">
+  <a href="#context" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Context
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#why-the-interval-cannot-catch-this" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Why the interval cannot catch this
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#what-was-measured" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What was measured
+      
+    </span>
+  </a>
+  
+    <nav class="md-nav" aria-label="What was measured">
+      <ul class="md-nav__list">
+        
+          <li class="md-nav__item">
+  <a href="#correction-the-zeros-above-were-underpowered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Correction: the zeros above were underpowered
+      
+    </span>
+  </a>
+  
+</li>
+        
+          <li class="md-nav__item">
+  <a href="#what-the-threshold-actually-buys" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        What the threshold actually buys
+      
+    </span>
+  </a>
+  
+</li>
+        
+      </ul>
+    </nav>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#options-considered" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Options considered
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#decision" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Decision
+      
+    </span>
+  </a>
+  
+</li>
+      
+        <li class="md-nav__item">
+  <a href="#consequences" class="md-nav__link">
+    <span class="md-ellipsis">
+      
+        Consequences
+      
+    </span>
+  </a>
+  
+</li>
+      
+    </ul>
+  
+</nav>
+                  </div>
+                </div>
+              </div>
+            
+          
+          
+            <div class="md-content" data-md-component="content">
+              
+              <article class="md-content__inner md-typeset">
+                
+                  
+
+
+  
+  
+
+
+<h1 id="adr-005-a-third-verdict-for-rules-with-too-few-detections">ADR-005: A third verdict for rules with too few detections<a class="headerlink" href="#adr-005-a-third-verdict-for-rules-with-too-few-detections" title="Permanent link">&para;</a></h1>
+<p>Status: accepted
+Date: 2026-10-20</p>
+<h2 id="context">Context<a class="headerlink" href="#context" title="Permanent link">&para;</a></h2>
+<p>ADR-001 committed the tool to deciding tunability from the lower bound of a
+bootstrap interval rather than from a point estimate. That is the right call and
+it is not sufficient, which a CI threshold check exposed by accident.</p>
+<p>The bundled corpus contains <code>ids_signature_generic</code>, a rule whose signal carries
+no information about whether an alert is real. It is in the corpus specifically
+so the tool has a chance to get it wrong. At 500,000 alerts it holds 12
+detections, the tool reported it untunable, and that looked like the safety
+property working.</p>
+<p>Then the same rule was analysed on a 200,000 alert corpus, where it holds 6
+detections:</p>
+<div class="highlight"><pre><span></span><code>separation 0.804, 95 percent interval [0.611, 0.960], verdict: tunable
+</code></pre></div>
+<p>A confident, narrow interval, comfortably clear of chance, on a rule whose true
+separation is 0.5 by construction. The tool recommended tuning a rule that
+cannot be tuned, and the interval gave no warning at all.</p>
+<h2 id="why-the-interval-cannot-catch-this">Why the interval cannot catch this<a class="headerlink" href="#why-the-interval-cannot-catch-this" title="Permanent link">&para;</a></h2>
+<p>A bootstrap resamples the observed data. With six detections it draws those same
+six, over and over, in different multiplicities. It therefore measures how much
+the statistic moves under reweighting of the observed sample, which is a real
+quantity and not the one that matters here. What it cannot measure is whether
+those six detections are representative of the rule, because it has nothing else
+to compare them to. If all six happened to score high, every replicate scores
+high, and the interval is narrow around a badly wrong estimate.</p>
+<p>The earlier correct verdict at 12 detections was not the safety property
+working. It was luck.</p>
+<h2 id="what-was-measured">What was measured<a class="headerlink" href="#what-was-measured" title="Permanent link">&para;</a></h2>
+<p>A signal with no information at all, 20,000 alerts, 60 independent draws per
+detection count, asking how often the tool returned a tunable verdict:</p>
+<table>
+<thead>
+<tr>
+<th>Detections</th>
+<th>False tunable rate</th>
+<th>Median interval width</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>3</td>
+<td>5.0 percent</td>
+<td>0.600</td>
+</tr>
+<tr>
+<td>5</td>
+<td>3.3 percent</td>
+<td>0.458</td>
+</tr>
+<tr>
+<td>8</td>
+<td>3.3 percent</td>
+<td>0.397</td>
+</tr>
+<tr>
+<td>12</td>
+<td>3.3 percent</td>
+<td>0.316</td>
+</tr>
+<tr>
+<td>20</td>
+<td>0.0 percent</td>
+<td>0.247</td>
+</tr>
+<tr>
+<td>30</td>
+<td>0.0 percent</td>
+<td>0.202</td>
+</tr>
+<tr>
+<td>50</td>
+<td>0.0 percent</td>
+<td>0.160</td>
+</tr>
+<tr>
+<td>100</td>
+<td>0.0 percent</td>
+<td>0.114</td>
+</tr>
+</tbody>
+</table>
+<h3 id="correction-the-zeros-above-were-underpowered">Correction: the zeros above were underpowered<a class="headerlink" href="#correction-the-zeros-above-were-underpowered" title="Permanent link">&para;</a></h3>
+<p>The table above says 0.0 percent at 20 detections and beyond. That is 0 out of
+60 draws, which is consistent with any true rate below about 5 percent, and the
+first version of this document read it as evidence that the false rate went to
+zero. It does not.</p>
+<p>A test written for an unrelated accessibility change hit a rule with 100
+detections and no signal at all, reported tunable with an interval of 0.508 to
+0.618. Re-running the sweep at 250 draws per count:</p>
+<table>
+<thead>
+<tr>
+<th>Detections</th>
+<th>Draws</th>
+<th>False tunable rate</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td>20</td>
+<td>250</td>
+<td>4.8 percent</td>
+</tr>
+<tr>
+<td>30</td>
+<td>250</td>
+<td>3.6 percent</td>
+</tr>
+<tr>
+<td>50</td>
+<td>250</td>
+<td>3.2 percent</td>
+</tr>
+<tr>
+<td>100</td>
+<td>250</td>
+<td>2.0 percent</td>
+</tr>
+</tbody>
+</table>
+<p>The rate does not go to zero above the threshold. It settles at roughly the 5
+percent a 95 percent interval promises, which is not a defect: a confidence
+interval that never contained a wrong answer would not be a confidence interval.
+Raising the detection minimum does not remove that and nothing can, short of
+raising the confidence level and accepting wider intervals everywhere.</p>
+<h3 id="what-the-threshold-actually-buys">What the threshold actually buys<a class="headerlink" href="#what-the-threshold-actually-buys" title="Permanent link">&para;</a></h3>
+<p>The failure below 20 detections is a different thing from the nominal error rate
+above it, and conflating the two is what the first version of this document did.</p>
+<p>Above the threshold, a false tunable verdict comes with a wide interval that
+barely clears 0.5. The 100 detection case read 0.508 to 0.618: a reader looking
+at it sees a lower bound sitting on the line and treats the result with the
+caution it deserves. The interval is doing its job and reporting weak evidence
+as weak.</p>
+<p>Below the threshold, the interval stops carrying that information. The six
+detection case read 0.611 to 0.960, which is not a marginal result; it is a
+confident one, and it is wrong. A reader has no signal at all that the number is
+untrustworthy, because the usual signal, interval width, has been destroyed by
+resampling six points.</p>
+<p>So the threshold is not there to drive the error rate to zero. It is there to
+keep false positives in the regime where the interval still warns you about
+them. That is a smaller claim than the one this document originally made and it
+is the one the measurements support.</p>
+<h2 id="options-considered">Options considered<a class="headerlink" href="#options-considered" title="Permanent link">&para;</a></h2>
+<ol>
+<li><strong>Widen the interval below some count.</strong> Rejected as dishonest arithmetic:
+   it reports an interval that is not the interval the method produced, chosen
+   to force the answer the author wanted.</li>
+<li><strong>Raise the confidence level for sparse rules.</strong> Same objection, with extra
+   steps, and it does not address the failure, which is that the sample may be
+   unrepresentative rather than merely variable.</li>
+<li><strong>Use a different interval method, such as BCa.</strong> It corrects for bias and
+   skewness, which helps at moderate counts and does not help at six, because
+   the problem is information rather than method.</li>
+<li><strong>Report untunable below a minimum count.</strong> Rejected: it gives the right
+   safety behaviour and the wrong instruction. An untunable rule needs a better
+   signal. A rule with six detections needs a longer window. Telling an engineer
+   the first when the second is true sends them to redesign a rule that may be
+   perfectly good.</li>
+<li><strong>Report a third verdict.</strong> Chosen.</li>
+</ol>
+<h2 id="decision">Decision<a class="headerlink" href="#decision" title="Permanent link">&para;</a></h2>
+<p>Three verdicts: <code>tunable</code>, <code>not_tunable</code>, and <code>insufficient_evidence</code>. A rule
+with fewer than <code>min_true_positives_for_verdict</code> detections is
+<code>insufficient_evidence</code> regardless of what its interval reads, and
+<code>insufficient_evidence</code> never reads as tunable.</p>
+<p>The default is 20. It is the count above which a false tunable verdict arrives
+with an interval that visibly straddles chance, rather than a narrow interval
+around a wrong estimate. It is configuration rather than a constant, because a
+team with a reason can lower it and own the consequence.</p>
+<p>It is explicitly not a count above which false positives stop. Roughly one in
+twenty weak rules will still read tunable, with a lower bound sitting on 0.5,
+and the report shows that bound so the reader can see it.</p>
+<h2 id="consequences">Consequences<a class="headerlink" href="#consequences" title="Permanent link">&para;</a></h2>
+<p>The bundled corpus now reports zero untunable rules and one unmeasured one,
+which is a more honest description of what 12 detections in 45,000 alerts
+supports. The README was rewritten around that, because the previous version
+cited the 12 detection rule as an example of the interval working, and that
+example was luck rather than evidence.</p>
+<p>The report, the chart and the CLI all carry three states. On the chart the
+unmeasured rule is dash dotted and amber rather than dashed and grey, and its
+label carries the detection count, so a reader sees immediately that the curve
+is built from very little.</p>
+<p>Collapsing the three back to two would be easy and is specifically what this
+decision refuses. "We do not know" is an answer, and a tool that cannot say it
+will eventually say something worse.</p>
+<p>Two tests pin this: one reproduces the exact six detection case and requires an
+unmeasured verdict, and one asserts that when a no signal rule above the
+threshold does read tunable, its interval lower bound sits close to 0.5 rather
+than comfortably above it. The second test replaced an earlier one that required
+no seed to come back tunable, which was asserting the overclaim this document
+originally made and would have failed as soon as the seed sweep widened.</p>
+<p>The lesson, recorded because it is the more useful half: a measured zero from
+60 draws is not a zero, and writing "measured" next to it does not make it one.
+The sweep should have been powered for the rate it was trying to rule out.</p>
+
+
+
+
+
+
+
+
+
+
+
+
+                
+              </article>
+            </div>
+          
+          
+<script>var target=document.getElementById(location.hash.slice(1));target&&target.name&&(target.checked=target.name.startsWith("__tabbed_"))</script>
+        </div>
+        
+          <button type="button" class="md-top md-icon" data-md-component="top" hidden>
+  
+  <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24"><path d="M13 20h-2V8l-5.5 5.5-1.42-1.42L12 4.16l7.92 7.92-1.42 1.42L13 8z"/></svg>
+  Back to top
+</button>
+        
+      </main>
+      
+        <footer class="md-footer">
+  
+  <div class="md-footer-meta md-typeset">
+    <div class="md-footer-meta__inner md-grid">
+      <div class="md-copyright">
+  
+  
+    Made with
+    <a href="https://squidfunk.github.io/mkdocs-material/" target="_blank" rel="noopener">
+      Material for MkDocs
+    </a>
+  
+</div>
+      
+    </div>
+  </div>
+</footer>
+      
+    </div>
+    <div class="md-dialog" data-md-component="dialog">
+      <div class="md-dialog__inner md-typeset"></div>
+    </div>
+    
+    
+    
+      
+      
+      <script id="__config" type="application/json">{"annotate": null, "base": "../..", "features": ["navigation.sections", "navigation.top", "content.code.copy", "toc.follow"], "search": "../../assets/javascripts/workers/search.a7633da7.min.js", "tags": null, "translations": {"clipboard.copied": "Copied to clipboard", "clipboard.copy": "Copy to clipboard", "search.result.more.one": "1 more on this page", "search.result.more.other": "# more on this page", "search.result.none": "No matching documents", "search.result.one": "1 matching document", "search.result.other": "# matching documents", "search.result.placeholder": "Type to start searching", "search.result.term.missing": "Missing", "select.version": "Select version"}, "version": null}</script>
+    
+    
+      <script src="../../assets/javascripts/bundle.c21346df.min.js"></script>
+      
+    
+  </body>
+</html>
